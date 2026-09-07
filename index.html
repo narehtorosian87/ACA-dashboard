@@ -289,9 +289,59 @@
     .meta{ text-align:left; }
     .barrow .barlabel, .stackrow .barlabel{ width:120px; }
   }
+
+  /* ---------- tab bar ---------- */
+  .tabbar{
+    max-width:1240px; margin:0 auto; padding:18px 24px 0; display:flex; gap:20px;
+    border-bottom:1px solid var(--border);
+  }
+  .tabbtn{
+    font:inherit; font-size:13.5px; font-weight:700; color:var(--text-muted);
+    background:none; border:0; border-bottom:2px solid transparent; margin-bottom:-1px;
+    padding:10px 2px 12px; cursor:pointer;
+  }
+  .tabbtn:hover{ color:var(--text-secondary); }
+  .tabbtn.active{ color:var(--text-primary); border-bottom-color:var(--blue); }
+  .tabpanel[hidden]{ display:none; }
+
+  /* ---------- sprint tab: goal cards ---------- */
+  .goalgrid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .goalcard{
+    background:var(--page); border:1px solid var(--border); border-radius:12px;
+    padding:16px 18px; display:flex; flex-direction:column; gap:12px; cursor:pointer;
+  }
+  .goalcard:hover{ border-color:var(--border-strong); }
+  .goalcard.active{ border-color:var(--blue); }
+  .goalcard.nogoal{ border-style:dashed; }
+  .goalcard .goalquote{ font-size:13.5px; color:var(--text-primary); font-weight:600; line-height:1.45; margin:0; }
+  .goalcard.nogoal .goalquote{ color:var(--text-muted); font-weight:500; font-style:italic; }
+  .goalcard .goalchips{ display:flex; flex-wrap:wrap; gap:6px; }
+  .goalchip{
+    font-size:11px; font-weight:600; color:var(--text-secondary); background:var(--surface);
+    border:1px solid var(--border); border-radius:999px; padding:3px 9px; white-space:nowrap;
+  }
+  .goalmeter{ display:flex; align-items:center; gap:10px; }
+  .goalmeter .track{ position:relative; flex:1 1 auto; height:10px; background:var(--gridline); border-radius:999px; overflow:hidden; }
+  .goalmeter .fill{ position:absolute; left:0; top:0; height:100%; background:var(--pri-low); border-radius:999px; }
+  .goalmeter .glabel{ font-size:12px; font-weight:700; color:var(--text-secondary); white-space:nowrap; font-variant-numeric:tabular-nums; }
+
+  .stage .name.dim{ font-style:italic; color:var(--text-muted); font-weight:500; }
+
+  .pill-delivered{ background:var(--pri-low-bg); color:var(--pri-low); }
+  .pill-inprogress{ background:var(--blue-wash); color:var(--stage-2); }
+  .pill-codereview{ background:var(--blue-wash); color:var(--stage-3); }
+  .pill-staging{ background:var(--blue-wash); color:var(--stage-3); }
+  .pill-todo{ background:var(--pri-none-bg); color:var(--text-muted); }
+  .pill-offered{ background:var(--pri-none-bg); color:var(--text-muted); }
+  .pill-nostatus{ background:var(--pri-none-bg); color:var(--text-muted); }
 </style>
 
-<div class="wrap">
+<nav class="tabbar">
+  <button class="tabbtn active" id="tabBtnBacklog" data-tab="backlog">📋 Product Backlog</button>
+  <button class="tabbtn" id="tabBtnSprints" data-tab="sprints">🏁 Sprint Progress</button>
+</nav>
+
+<div class="wrap tabpanel active" id="panel-backlog">
 
   <header class="top">
     <div>
@@ -392,6 +442,104 @@
   <footer class="note">
     Scope: 181 backlog items where Product = Booking Engine, exported from the Asana "Product Backlog" project on 2026&#8209;09&#8209;07.
     "No Epic" / "No priority" reflect fields left blank in Asana at export time, not a real category — treat their share as a data-hygiene signal rather than product signal.
+  </footer>
+
+</div>
+
+<div class="wrap tabpanel" id="panel-sprints" hidden>
+
+  <header class="top">
+    <div>
+      <p class="eyebrow">Sprint Retro &middot; <span id="sprintName">Past 10.1.2</span></p>
+      <h1>Sprint progress</h1>
+      <p class="sub">Every ticket carried in this sprint, grouped by the goals that were defined for it — plus where each ticket sits in the delivery pipeline.</p>
+    </div>
+    <div class="meta">
+      <div><b id="sprintMetaTotal">82</b> tickets in this sprint</div>
+      <div>Exported from Asana &middot; generated 2026-09-07</div>
+    </div>
+  </header>
+
+  <div class="filterbar">
+    <span class="flabel">Filter</span>
+    <div class="search">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.6" stroke="currentColor" stroke-width="1.4"/><path d="M9.6 9.6L13 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <input id="sprintSearchInput" type="text" placeholder="Search ticket names…">
+    </div>
+    <select id="sprintGoalSelect" class="fselect"></select>
+    <select id="sprintEpicSelect" class="fselect"></select>
+    <select id="sprintStatusSelect" class="fselect"></select>
+    <select id="sprintAssigneeSelect" class="fselect"></select>
+    <div class="spacer"></div>
+    <span class="resultcount" id="sprintResultCount"></span>
+    <button class="resetlink" id="sprintResetBtn">Reset filters</button>
+  </div>
+
+  <div class="kpis" id="sprintKpiRow"></div>
+
+  <div class="card">
+    <h2>Sprint goals</h2>
+    <p class="cardsub">Progress toward each defined sprint goal. Tickets with no goal recorded are grouped separately — click a card to filter the table below.</p>
+    <div class="goalgrid" id="goalGrid"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>Delivery pipeline</h2>
+      <p class="cardsub">Where sprint tickets sit right now.</p>
+      <div class="stage-wrap" id="sprintStageChart"></div>
+    </div>
+    <div class="card">
+      <h2>Delivered over time</h2>
+      <p class="cardsub">Cumulative tickets marked Delivered, by completion date.</p>
+      <div class="trendwrap">
+        <svg class="trend" id="sprintTrendSvg" viewBox="0 0 640 200" preserveAspectRatio="none"></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>Epics worked this sprint</h2>
+      <p class="cardsub">Ticket count per Epic within this sprint.</p>
+      <div id="sprintEpicChart"></div>
+    </div>
+    <div class="card">
+      <h2>By assignee</h2>
+      <p class="cardsub">Delivered vs. still in flight vs. not yet started, per person.</p>
+      <div class="legend" id="assigneeLegend"></div>
+      <div id="assigneeChart"></div>
+    </div>
+  </div>
+
+  <div class="card tablecard">
+    <h2>Sprint ticket explorer</h2>
+    <p class="cardsub">Every ticket in this sprint — filtered and sorted live.</p>
+    <div class="tablewrap">
+      <div class="scrollbody">
+        <table class="tickets">
+          <thead>
+            <tr>
+              <th data-sprintsort="name">Ticket<span class="arrow"></span></th>
+              <th data-sprintsort="epic">Epic<span class="arrow"></span></th>
+              <th data-sprintsort="goal">Sprint goal<span class="arrow"></span></th>
+              <th data-sprintsort="status">Status<span class="arrow"></span></th>
+              <th data-sprintsort="assignee">Assignee<span class="arrow"></span></th>
+              <th data-sprintsort="points">Pts<span class="arrow"></span></th>
+              <th data-sprintsort="completed">Completed<span class="arrow"></span></th>
+            </tr>
+          </thead>
+          <tbody id="sprintTicketBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer class="note">
+    Scope: 82 tickets exported from the "Past 10.1.2" sprint project in Asana on 2026&#8209;09&#8209;07.
+    "Actual story points" weren't logged for this sprint (only 17 of 82 tickets even carry an estimate), so effort is shown as ticket counts rather than points.
+    Tickets with no Section/Column set are untracked sub-tasks rather than kanban cards, and are broken out separately in the pipeline chart.
+    Roughly 6 in 10 tickets this sprint weren't tied to one of the defined sprint goals — treat that as a planning/tagging signal, not necessarily wasted work.
   </footer>
 
 </div>
@@ -827,4 +975,437 @@ function render(){
 
 buildFilterBar();
 render();
+</script>
+
+<script>
+// =====================================================================
+// Sprint Progress tab — independent of the Product Backlog tab above.
+// =====================================================================
+const SPRINT_DATA = {"name": "Past 10.1.2", "tickets": [{"id": "1217635457335017", "name": "[Configs] Aethos Sardinia - Payment texts in CCG Confirmation email and page -> Add configuration fields in the platform", "status": "Offered", "epic": null, "objective": "Add IBE customization options", "goal": null, "points": null, "assignee": "Jerry Sietsma", "created": "2026-08-19", "completed": "2026-08-26"}, {"id": "1217360124840341", "name": "Standard price in Loyalty benefits modal - Not-discounted rate", "status": "Offered", "epic": "Loyalty (Bookingwhizzz)", "objective": null, "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Nareh Torosian", "created": "2026-08-12", "completed": "2026-08-12"}, {"id": "1217007506016895", "name": "IBE - (RDP) Checkout form Not loading for multiple SBI Indonesian properties", "status": "\ud83d\udcdd To do", "epic": "IBE check-out and payments", "objective": "Enhance booking engine stability", "goal": null, "points": null, "assignee": null, "created": "2026-07-30", "completed": null}, {"id": "1213409440670338", "name": "PCI Booking - ApplePay/Google Pay: Create Payments Library session", "status": "\ud83d\udcdd To do", "epic": "IBE check-out and payments", "objective": "Extend PCI Booking integration (payment library)", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Ren\u00e9 van Asperen", "created": "2026-02-23", "completed": null}, {"id": "1216815043246216", "name": "Aethos London Shoreditch - Summer in London Rate Displaying Incorrectly (rate name and price) in Booking Engine's Rates step", "status": "\ud83d\udcdd To do", "epic": "IBE stability", "objective": "Enhance booking engine stability", "goal": null, "points": null, "assignee": "Khalid Charaa", "created": "2026-07-23", "completed": null}, {"id": "1217012548964146", "name": "Following up on API updates on OpenGDS side (image/details changed for property, rate, accom, supplement)", "status": "\ud83d\udcdd To do", "epic": null, "objective": null, "goal": "Work that directly reduces product operating costs", "points": null, "assignee": "Ren\u00e9 van Asperen", "created": "2026-07-30", "completed": null}, {"id": "1217211425910647", "name": "GHC - Job optimizations", "status": "\ud83d\udcdd To do", "epic": "GHA integration (metasearch)", "objective": null, "goal": "Work that directly reduces product operating costs", "points": null, "assignee": "Ren\u00e9 van Asperen", "created": "2026-08-06", "completed": null}, {"id": "1215308200051115", "name": "ReCAPTCHA implementation [3]", "status": "\ud83d\udcdd To do", "epic": "IBE stability", "objective": "Enhance booking engine stability", "goal": "Work that directly reduces product operating costs", "points": 3.0, "assignee": "Sander van Kasteel", "created": "2026-06-02", "completed": null}, {"id": "1217010631678090", "name": "[Paused] BS refactor phase 2: Extract actions [13]", "status": "\ud83d\udcdd To do", "epic": "IBE back-end refactor", "objective": "Enhance booking engine stability", "goal": "Two refactors moving the technical foundation forward, one wrapping up, one entering its next phase", "points": 13.0, "assignee": "Ren\u00e9 van Asperen", "created": "2026-07-30", "completed": null}, {"id": "1209151831254526", "name": "2 Factor Authentication - Platform login [5]", "status": "\ud83d\udcdd To do", "epic": null, "objective": null, "goal": null, "points": 5.0, "assignee": "Khalid Charaa", "created": "2025-01-14", "completed": null}, {"id": "1210984600727011", "name": "Improvements to 'Rate' step: Rate conditions and policies [8]", "status": "\ud83d\udcdd To do", "epic": "IBE UI/UX", "objective": "Improve IBE conversion", "goal": null, "points": 8.0, "assignee": null, "created": "2025-08-06", "completed": null}, {"id": "1217538058170601", "name": "AWS project (cost reduction) [13]", "status": "\ud83e\uddd1\u200d\ud83d\udcbb In progress", "epic": null, "objective": null, "goal": "Work that directly reduces product operating costs", "points": 13.0, "assignee": "Sander van Kasteel", "created": "2026-08-17", "completed": null}, {"id": "1217538058170605", "name": "Migration of the database server for the widget-system services", "status": null, "epic": null, "objective": null, "goal": null, "points": null, "assignee": null, "created": "2026-08-17", "completed": null}, {"id": "1217666566470791", "name": "Migrate database server for the Event Collector (Smart Notifications)", "status": null, "epic": null, "objective": null, "goal": null, "points": null, "assignee": null, "created": "2026-08-20", "completed": null}, {"id": "1217666566470792", "name": "Migrate database server for the platform", "status": null, "epic": null, "objective": null, "goal": null, "points": null, "assignee": null, "created": "2026-08-20", "completed": null}, {"id": "1216908458489661", "name": "Set up more staging environment", "status": "\ud83e\uddd1\u200d\ud83d\udcbb In progress", "epic": null, "objective": null, "goal": null, "points": null, "assignee": "Sander van Kasteel", "created": "2026-07-28", "completed": null}, {"id": "1216908458489663", "name": "Setting up a server", "status": null, "epic": null, "objective": null, "goal": null, "points": null, "assignee": null, "created": "2026-07-28", "completed": null}, {"id": "1216908458489664", "name": "Setting up K3s (together with ArgoCD, most likely)", "status": null, "epic": null, "objective": null, "goal": null, "points": null, "assignee": null, "created": "2026-07-28", "completed": null}, {"id": "1216908310705385", "name": "Setting up the necessary database server and do an initial database seed (with a set of test properties, 1 single property, 1 property group)", "status": null, "epic": null, "objective": null, "goal": null, "points": null, "assignee": null, "created": "2026-07-28", "completed": null}, {"id": "1216908310705386", "name": "Hooking it into the current Github Actions system", "status": null, "epic": null, "objective": null, "goal": null, "points": null, "assignee": null, "created": "2026-07-28", "completed": null}, {"id": "1212359076591116", "name": "GitHub Actions [5]", "status": "\ud83e\uddd1\u200d\ud83d\udcbb In progress", "epic": null, "objective": null, "goal": null, "points": 5.0, "assignee": "Sander van Kasteel", "created": "2025-12-09", "completed": null}, {"id": "1216842958818344", "name": "Follow up on \"State management refactor - Policy derived and URL state solution + Global state architecture (Integration)\"", "status": "\ud83e\uddd1\u200d\ud83d\udcbb In progress", "epic": "IBE front-end refactor", "objective": "Enhance booking engine stability", "goal": "Two refactors moving the technical foundation forward, one wrapping up, one entering its next phase", "points": null, "assignee": "Jerry Sietsma", "created": "2026-07-24", "completed": null}, {"id": "1216979511317131", "name": "Follow up on \"State management refactor - Policy derived and URL state solution + Global state architecture (Integration)\" - Architectural refactor", "status": "\ud83e\uddd1\u200d\ud83d\udcbb In progress", "epic": "IBE front-end refactor", "objective": "Enhance booking engine stability", "goal": "Two refactors moving the technical foundation forward, one wrapping up, one entering its next phase", "points": null, "assignee": "Scott Jones", "created": "2026-07-29", "completed": null}, {"id": "1215033117748781", "name": "AI Content Enrichment - Knowledge base (Back-end)", "status": "\ud83e\uddd1\u200d\ud83d\udcbb In progress", "epic": "AI in IBE", "objective": "Context layer and foundation for AI feature", "goal": "A forward-looking decision that sets the pattern for future AI based projects", "points": null, "assignee": "Ren\u00e9 Zondervan", "created": "2026-05-22", "completed": null}, {"id": "1216905518141145", "name": "Issue with OpenGDS and IBE for Avenida Mountain Lodges Kaprun - Incorrect availability in IBE", "status": "\ud83e\uddd1\u200d\ud83d\udcbb In progress", "epic": "IBE stability", "objective": "Enhance booking engine stability", "goal": null, "points": null, "assignee": "Khalid Charaa", "created": "2026-07-27", "completed": null}, {"id": "1214891536200399", "name": "Revisiting the implementation for refunding unfinished bookings (revalidating booking status after payment is processed)", "status": "\ud83e\uddd1\u200d\ud83d\udcbb In progress", "epic": "IBE check-out and payments", "objective": "Enhance booking engine stability", "goal": null, "points": null, "assignee": "Ren\u00e9 van Asperen", "created": "2026-05-19", "completed": null}, {"id": "1214394008854979", "name": "RDP check-out flow issue: 'Something went wrong' error + session restoration [5]", "status": "\u2611\ufe0f Deployed staging", "epic": "IBE check-out and payments", "objective": "Enhance booking engine stability", "goal": null, "points": 5.0, "assignee": "Scott Jones", "created": "2026-04-29", "completed": null}, {"id": "1217765421296806", "name": "Editor field for translation overrides (CCG payment texts)", "status": "\ud83d\udd0e Code review", "epic": null, "objective": null, "goal": null, "points": null, "assignee": "Jerry Sietsma", "created": "2026-08-24", "completed": "2026-08-25"}, {"id": "1209150755378988", "name": "IBE 'active languages' configuration [3]", "status": "\ud83d\udd0e Code review", "epic": null, "objective": "Unblock onboarding, Platform cleanup (+ add configurations)", "goal": null, "points": 3.0, "assignee": "Jerry Sietsma", "created": "2025-01-16", "completed": null}, {"id": "1216842958818325", "name": "[Spike] Reducing number of 'unfinished' bookings - Front-end side [5]", "status": "\ud83d\udd0e Code review", "epic": null, "objective": null, "goal": null, "points": 5.0, "assignee": "Scott Jones", "created": "2026-07-24", "completed": "2026-08-10"}, {"id": "1217010631678084", "name": "BS refactor phase 1: Prerequisites [8]", "status": "\ud83d\udd0e Code review", "epic": "IBE back-end refactor", "objective": "Enhance booking engine stability", "goal": "Two refactors moving the technical foundation forward, one wrapping up, one entering its next phase", "points": 8.0, "assignee": "Ren\u00e9 van Asperen", "created": "2026-07-30", "completed": null}, {"id": "1217180499659588", "name": "Default 'Country' selected in Stripe checkout form", "status": "\ud83d\udd0e Code review", "epic": "IBE check-out and payments", "objective": "Improve IBE conversion", "goal": null, "points": null, "assignee": "Jerry Sietsma", "created": "2026-08-06", "completed": null}, {"id": "1216849813281968", "name": "Follow up on \"Image overlay: Image size and resolution - Media convert\"", "status": "\ud83d\udd0e Code review", "epic": "IBE stability", "objective": "Improve IBE conversion", "goal": null, "points": null, "assignee": "Jerry Sietsma", "created": "2026-07-24", "completed": null}, {"id": "1217211425910637", "name": "Follow up on \"Switching promocodes\" - UX of when new promocode is added", "status": "\u2705 Delivered", "epic": "IBE UI/UX", "objective": null, "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Scott Jones", "created": "2026-08-06", "completed": "2026-08-27"}, {"id": "1217671430801559", "name": "Verdi Hotels | Inaccurate Data in metasearch reporting", "status": "\u2705 Delivered", "epic": "Metasearch reporting", "objective": "Implement Metasearch report", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Sander van Kasteel", "created": "2026-08-20", "completed": "2026-08-26"}, {"id": "1216383128005434", "name": "Milky-way: Cannot complete a booking with RDP", "status": "\u2705 Delivered", "epic": "IBE check-out and payments", "objective": null, "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Ren\u00e9 van Asperen", "created": "2026-07-08", "completed": "2026-08-25"}, {"id": "1217671519051014", "name": "Incorrect rate displayed (calculated) rate in Rates step for single adult search", "status": "\u2705 Delivered", "epic": "Core features logic (rates, availability, child, extra bed, etc)", "objective": "Unblock onboarding", "goal": null, "points": null, "assignee": "Khalid Charaa", "created": "2026-08-21", "completed": "2026-08-24"}, {"id": "1217594318052404", "name": "Correct calculation of discount amounts", "status": "\u2705 Delivered", "epic": "Promocodes", "objective": "Enhance booking engine stability", "goal": null, "points": null, "assignee": "Khalid Charaa", "created": "2026-08-19", "completed": "2026-08-21"}, {"id": "1217671432212747", "name": "Stripe checkout flow: Not being redirect to Confirmation page - When promocode added", "status": "\u2705 Delivered", "epic": "IBE check-out and payments", "objective": "Enhance booking engine stability", "goal": null, "points": null, "assignee": "Khalid Charaa", "created": "2026-08-20", "completed": "2026-08-21"}, {"id": "1216619411887921", "name": "Reducing number of 'unfinished' bookings", "status": "\u2705 Delivered", "epic": null, "objective": null, "goal": "Work that directly reduces product operating costs", "points": null, "assignee": "Khalid Charaa", "created": "2026-07-16", "completed": "2026-08-21"}, {"id": "1213829654841450", "name": "Convert button component action - Open IBE as a pop up (Scope: class name and data attribute) [5]", "status": "\u2705 Delivered", "epic": "Interaction-builder and WS", "objective": null, "goal": null, "points": 5.0, "assignee": "Jerry Sietsma", "created": "2026-03-27", "completed": null}, {"id": "1209193950210902", "name": "IBE emails sender address, name - customization [3]", "status": "\u2705 Delivered", "epic": "Emails", "objective": "Platform cleanup (+ add configurations), Unblock onboarding", "goal": null, "points": 3.0, "assignee": "Jerry Sietsma", "created": "2025-01-21", "completed": "2026-09-03"}, {"id": "1217583885772942", "name": "Use host currency (hc={CUR}) for Core API requests", "status": "\u2705 Delivered", "epic": "Promocodes", "objective": null, "goal": null, "points": null, "assignee": "Khalid Charaa", "created": "2026-08-19", "completed": "2026-08-20"}, {"id": "1217566376479324", "name": "Incorrect discount amount applied/displayed on Booking Engine (impacting Rooms and Rates steps) -> User group currency case", "status": "\u2705 Delivered", "epic": "Promocodes", "objective": "Enhance booking engine stability", "goal": null, "points": null, "assignee": "Khalid Charaa", "created": "2026-08-18", "completed": "2026-08-20"}, {"id": "1217354577606180", "name": "Documentation for GHC - Jobs optimizations", "status": "\u2705 Delivered", "epic": "GHA integration (metasearch)", "objective": "Pave the way for next epics (spike, research,)", "goal": "Work that directly reduces product operating costs", "points": null, "assignee": "Sander van Kasteel", "created": "2026-08-11", "completed": "2026-08-19"}, {"id": "1217341208916683", "name": "[Config] Set up Cendyn URL redirects and upload the landing page", "status": "\u2705 Delivered", "epic": "GHA integration (metasearch)", "objective": "Unblock onboarding", "goal": null, "points": null, "assignee": "Sander van Kasteel", "created": "2026-08-10", "completed": "2026-08-24"}, {"id": "1216650651668487", "name": "[Config] Set up GA4 and ecommerce tracking for HC IBE", "status": "\u2705 Delivered", "epic": null, "objective": "Unblock onboarding", "goal": null, "points": null, "assignee": "Jerry Sietsma", "created": "2026-07-17", "completed": "2026-08-13"}, {"id": "1209510297503789", "name": "Add setting for Google Analytics type [3]", "status": "\u2705 Delivered", "epic": null, "objective": "Unblock onboarding, Platform cleanup (+ add configurations)", "goal": null, "points": 3.0, "assignee": "Jerry Sietsma", "created": "2025-02-26", "completed": "2026-08-17"}, {"id": "1217359605814569", "name": "KOMPAS, Alpami | IBE email templates section in the platform is not opening", "status": "\u2705 Delivered", "epic": null, "objective": "Unblock onboarding", "goal": null, "points": null, "assignee": "Khalid Charaa", "created": "2026-08-11", "completed": "2026-08-13"}, {"id": "1216537577216985", "name": "[Config] Change booking confirmation/cancellation email address for Aethos Ericeira (sender + template)", "status": "\u2705 Delivered", "epic": null, "objective": null, "goal": null, "points": null, "assignee": "Khalid Charaa", "created": "2026-07-13", "completed": "2026-08-13"}, {"id": "1216826504833936", "name": "[Hotel Zum Stern] Interactions showing on main Alpin Family site -> Alpin Family (brand) and Zum Stern websites share the same Convert Hashkey", "status": "\u2705 Delivered", "epic": null, "objective": "Resolve priority issues with Convert (non-IBE products)", "goal": null, "points": null, "assignee": "Khalid Charaa", "created": "2026-07-23", "completed": "2026-08-13"}, {"id": "1217327081267476", "name": "Hotel Zum Stern | Mews accounting integration not working", "status": "\u2705 Delivered", "epic": "Mews accounting integration", "objective": null, "goal": null, "points": null, "assignee": "Sander van Kasteel", "created": "2026-08-10", "completed": null}, {"id": "1216934729371361", "name": "Double records Posted in Mews for Hotel Casa", "status": "\u2705 Delivered", "epic": "Mews accounting integration", "objective": null, "goal": null, "points": null, "assignee": "Sander van Kasteel", "created": "2026-07-28", "completed": null}, {"id": "1217265120202333", "name": "Payment charged once in Stripe received twice in PMS - Alpin Family", "status": "\u2705 Delivered", "epic": "Mews accounting integration", "objective": null, "goal": null, "points": null, "assignee": "Sander van Kasteel", "created": "2026-08-07", "completed": null}, {"id": "1217359605814589", "name": "Issue with Google (GHC) parsing property list", "status": "\u2705 Delivered", "epic": "GHA integration (metasearch)", "objective": null, "goal": null, "points": null, "assignee": "Sander van Kasteel", "created": "2026-08-11", "completed": "2026-08-19"}, {"id": "1217311279056569", "name": "Loyalty feature (before enabling for pilot properties) - Mobile IBE", "status": "\u2705 Delivered", "epic": "Loyalty (Bookingwhizzz)", "objective": "Deliver on commitments to SBH", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Khalid Charaa", "created": "2026-08-10", "completed": "2026-08-19"}, {"id": "1216849813281975", "name": "1. Advance IBE Testing feedback -> Check the 'Room night' metric", "status": "\u2705 Delivered", "epic": "IBE reporting", "objective": "Implement advanced IBE reporting (chain reporting + invoicing)", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Khalid Charaa", "created": "2026-07-24", "completed": "2026-08-11"}, {"id": "1216372585691092", "name": "2. IBE reporting - Revenue numbers (NOT related to taxes)", "status": "\u2705 Delivered", "epic": "IBE reporting", "objective": "Implement advanced IBE reporting (chain reporting + invoicing)", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Khalid Charaa", "created": "2026-07-08", "completed": "2026-08-10"}, {"id": "1216780729012741", "name": "3. Follow up on \"Room revenue number in IBE analytics dashboard - Discounted bookings\" -> In breakdown dashboards", "status": "\u2705 Delivered", "epic": "IBE reporting", "objective": "Implement advanced IBE reporting (chain reporting + invoicing)", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Khalid Charaa", "created": "2026-07-22", "completed": "2026-08-10"}, {"id": "1216557310569319", "name": "4. Add export functionality in new reporting dashboard", "status": "\u2705 Delivered", "epic": "IBE reporting", "objective": "Implement advanced IBE reporting (chain reporting + invoicing)", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Khalid Charaa", "created": "2026-07-15", "completed": "2026-08-10"}, {"id": "1216705350951987", "name": "5. Reporting - Taxes (Excluded/ OpenGDS taxes and fees)", "status": "\u2705 Delivered", "epic": "IBE reporting", "objective": "Implement advanced IBE reporting (chain reporting + invoicing)", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Khalid Charaa", "created": "2026-07-20", "completed": "2026-08-11"}, {"id": "1217257698639025", "name": "KOMPAS | embedded convert section in the platform is not opening", "status": "\u2705 Delivered", "epic": null, "objective": "Unblock onboarding", "goal": null, "points": null, "assignee": "Khalid Charaa", "created": "2026-08-06", "completed": "2026-08-11"}, {"id": "1217237424721465", "name": "QUESTION: Can we retrieve existing Saved Search leads captured prior to Revinate token addition?", "status": "\u2705 Delivered", "epic": null, "objective": null, "goal": null, "points": null, "assignee": "Khalid Charaa", "created": "2026-08-06", "completed": "2026-08-07"}, {"id": "1217359605814572", "name": "Loyalty feature (before enabling for pilot properties) - Mobile IBE - Part 2", "status": "\u2705 Delivered", "epic": "Loyalty (Bookingwhizzz)", "objective": "Deliver on commitments to SBH", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Khalid Charaa", "created": "2026-08-11", "completed": "2026-08-19"}, {"id": "1216633187483702", "name": "The Wesley | OTAs missing for Ratebeat", "status": "\u2705 Delivered", "epic": null, "objective": "Unblock onboarding", "goal": null, "points": null, "assignee": "Khalid Charaa", "created": "2026-07-16", "completed": null}, {"id": "1215533099878099", "name": "[Configs] Yazz Collective| Set up custom sender email domain for email capture interaction (Convert)", "status": "\u2705 Delivered", "epic": null, "objective": null, "goal": null, "points": null, "assignee": "Khalid Charaa", "created": "2026-06-09", "completed": null}, {"id": "1216140704928661", "name": "Loyalty - Members' benefits pop-up [3]", "status": "\u2705 Delivered", "epic": "Loyalty (Bookingwhizzz)", "objective": "Deliver on commitments to SBH", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": 3.0, "assignee": "Scott Jones", "created": "2026-06-30", "completed": "2026-08-10"}, {"id": "1214992676009605", "name": "Switching promocodes [5]", "status": "\u2705 Delivered", "epic": "Promocodes", "objective": "Deliver on commitments to SBH", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": 5.0, "assignee": "Scott Jones", "created": "2026-05-21", "completed": "2026-08-10"}, {"id": "1216021461677483", "name": "Google Ads data from MHS -> Getting 403 from MHS API", "status": "\u2705 Delivered", "epic": "Metasearch reporting", "objective": "Implement Metasearch report", "goal": null, "points": null, "assignee": "Sander van Kasteel", "created": "2026-06-26", "completed": "2026-08-11"}, {"id": "1217100966541950", "name": "Metasearch report - Free link booking data for HC IBE customers (GA4)", "status": "\u2705 Delivered", "epic": "Metasearch reporting", "objective": "Implement Metasearch report", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Sander van Kasteel", "created": "2026-08-03", "completed": "2026-08-24"}, {"id": "1217150250026726", "name": "Follow up on \"Cendyn Migration (High priority)\" -> Cendyn redirect URLs", "status": "\u2705 Delivered", "epic": "Metasearch reporting", "objective": "Implement Metasearch report", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Sander van Kasteel", "created": "2026-08-04", "completed": "2026-08-24"}, {"id": "1213361618880634", "name": "Issue with removing promocodes [3]", "status": "\u2705 Delivered", "epic": "Promocodes", "objective": "Enhance booking engine stability", "goal": null, "points": 3.0, "assignee": "Scott Jones", "created": "2026-02-23", "completed": "2026-08-06"}, {"id": "1215522385462101", "name": "[Config] Sorell Hotels I Customise Sender Email Addresses for Saved Search Interactions per Property", "status": "\u2705 Delivered", "epic": null, "objective": null, "goal": null, "points": null, "assignee": "Khalid Charaa", "created": "2026-06-09", "completed": null}, {"id": "1216557220261096", "name": "Metasearch - Post Live Feedback", "status": "\u2705 Delivered", "epic": "Metasearch reporting", "objective": "Implement Metasearch report", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Sander van Kasteel", "created": "2026-07-14", "completed": "2026-08-24"}, {"id": "1216650723542961", "name": "[Config] Add IBE active languages", "status": "\u2705 Delivered", "epic": null, "objective": "Unblock onboarding", "goal": null, "points": null, "assignee": "Jerry Sietsma", "created": "2026-07-17", "completed": "2026-08-10"}, {"id": "1216974617257473", "name": "Follow up on \"Improve (track) integrations with 3rd party partners\" - Alerts for image loads and media subdomain", "status": "\u2705 Delivered", "epic": "IBE observability and monitoring", "objective": "Enhance booking engine stability", "goal": null, "points": null, "assignee": "Ren\u00e9 Zondervan", "created": "2026-07-29", "completed": "2026-08-06"}, {"id": "1216345577549650", "name": "Loyalty members' discount - platform configs and back-end [5]", "status": "\u2705 Delivered", "epic": "Loyalty (Bookingwhizzz)", "objective": "Deliver on commitments to SBH", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": 5.0, "assignee": "Khalid Charaa", "created": "2026-07-07", "completed": "2026-08-19"}, {"id": "1214122854700458", "name": "Legacy Data Migration (MHS)", "status": "\u2705 Delivered", "epic": "Metasearch reporting", "objective": "Implement Metasearch report", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Sander van Kasteel", "created": "2026-04-20", "completed": "2026-08-24"}, {"id": "1217047917809828", "name": "[URGENT] Published interaction updates not syncing to live website \u2014 affecting multiple accounts (The Chedi Al Bait + ice Q / Das Central + Landgoed Duin & Kruidberg)", "status": "\u2705 Delivered", "epic": null, "objective": "Resolve priority issues with Convert (non-IBE products)", "goal": null, "points": null, "assignee": "Sander van Kasteel", "created": "2026-07-31", "completed": "2026-08-06"}, {"id": "1217120208866006", "name": "Do we have an issue with capturing scheduled off-session payments?", "status": "\u2705 Delivered", "epic": null, "objective": "Enhance booking engine stability", "goal": null, "points": null, "assignee": "Sander van Kasteel", "created": "2026-08-03", "completed": "2026-08-06"}, {"id": "1216705350951992", "name": "[Spike] AI content enrichment (knowledge base) + POC", "status": "\u2705 Delivered", "epic": "AI in IBE", "objective": "Context layer and foundation for AI feature", "goal": "A forward-looking decision that sets the pattern for future AI based projects", "points": null, "assignee": "Ren\u00e9 Zondervan", "created": "2026-07-20", "completed": "2026-08-24"}, {"id": "1213876944712958", "name": "CCG with ApplePay/GooglePay - Feature flag to enable/disable the feature per customer", "status": "\u2705 Delivered", "epic": "IBE check-out and payments", "objective": "Extend PCI Booking integration (payment library)", "goal": "Four customer-facing deliverables crossing the finish line this sprint", "points": null, "assignee": "Ren\u00e9 van Asperen", "created": "2026-03-30", "completed": null}]}
+;
+
+function escHtml2(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function escAttr2(s){ return String(s).replace(/"/g,'&quot;'); }
+
+function stageRank(status){
+  if(!status) return -1;
+  if(status.includes('To do')) return 1;
+  if(status.includes('In progress')) return 2;
+  if(status.includes('Code review')) return 3;
+  if(status.includes('Deployed staging')) return 4;
+  if(status.includes('Delivered')) return 5;
+  return 0; // Offered / anything else not-started
+}
+function stageColor(status){
+  const r = stageRank(status);
+  if(r <= 1) return 'var(--pri-none)';
+  if(r === 2) return 'var(--stage-1)';
+  if(r === 3) return 'var(--stage-2)';
+  if(r === 4) return 'var(--stage-3)';
+  if(r === 5) return 'var(--pri-low)';
+  return 'var(--pri-none)';
+}
+function pillClassForStatus(status){
+  const r = stageRank(status);
+  if(r < 0) return 'pill-nostatus';
+  if(r === 0) return 'pill-offered';
+  if(r === 1) return 'pill-todo';
+  if(r === 2) return 'pill-inprogress';
+  if(r === 3) return 'pill-codereview';
+  if(r === 4) return 'pill-staging';
+  return 'pill-delivered';
+}
+function isDelivered(status){ return !!status && status.includes('Delivered'); }
+
+const sprintState = { search:'', goal:'', epic:'', status:'', assignee:'' };
+
+function applySprintFilters(){
+  return SPRINT_DATA.tickets.filter(t=>{
+    if(sprintState.search){
+      const q = sprintState.search.toLowerCase();
+      if(!t.name.toLowerCase().includes(q)) return false;
+    }
+    if(sprintState.goal){
+      if(sprintState.goal === '__none__'){ if(t.goal) return false; }
+      else if(t.goal !== sprintState.goal) return false;
+    }
+    if(sprintState.epic){
+      if(sprintState.epic === '__none__'){ if(t.epic) return false; }
+      else if(t.epic !== sprintState.epic) return false;
+    }
+    if(sprintState.status){
+      if(sprintState.status === '__none__'){ if(t.status) return false; }
+      else if(t.status !== sprintState.status) return false;
+    }
+    if(sprintState.assignee){
+      if(sprintState.assignee === '__none__'){ if(t.assignee) return false; }
+      else if(t.assignee !== sprintState.assignee) return false;
+    }
+    return true;
+  });
+}
+
+function buildSprintFilterBar(){
+  document.getElementById('sprintName').textContent = SPRINT_DATA.name;
+  document.getElementById('sprintMetaTotal').textContent = SPRINT_DATA.tickets.length;
+
+  const goalCounts = {};
+  SPRINT_DATA.tickets.forEach(t=>{ const k = t.goal || '__none__'; goalCounts[k] = (goalCounts[k]||0)+1; });
+  const goals = Object.keys(goalCounts).filter(k=>k!=='__none__');
+  let goalOpts = '<option value="">All sprint goals</option>';
+  goals.forEach(g=>{ goalOpts += `<option value="${escAttr2(g)}">${escHtml2(g.length>50?g.slice(0,50)+'…':g)} (${goalCounts[g]})</option>`; });
+  goalOpts += `<option value="__none__">No sprint goal (${goalCounts['__none__']||0})</option>`;
+  document.getElementById('sprintGoalSelect').innerHTML = goalOpts;
+
+  const epicCounts = {};
+  SPRINT_DATA.tickets.forEach(t=>{ const k = t.epic || '__none__'; epicCounts[k] = (epicCounts[k]||0)+1; });
+  const epics = Object.keys(epicCounts).filter(k=>k!=='__none__').sort((a,b)=>epicCounts[b]-epicCounts[a]);
+  let epicOpts = '<option value="">All epics</option>';
+  epics.forEach(e=>{ epicOpts += `<option value="${escAttr2(e)}">${escHtml2(e)} (${epicCounts[e]})</option>`; });
+  epicOpts += `<option value="__none__">No epic (${epicCounts['__none__']||0})</option>`;
+  document.getElementById('sprintEpicSelect').innerHTML = epicOpts;
+
+  const statusCounts = {};
+  SPRINT_DATA.tickets.forEach(t=>{ const k = t.status || '__none__'; statusCounts[k] = (statusCounts[k]||0)+1; });
+  const statuses = Object.keys(statusCounts).filter(k=>k!=='__none__').sort((a,b)=>stageRank(a)-stageRank(b));
+  let statusOpts = '<option value="">All statuses</option>';
+  statuses.forEach(s=>{ statusOpts += `<option value="${escAttr2(s)}">${escHtml2(s)} (${statusCounts[s]})</option>`; });
+  statusOpts += `<option value="__none__">No status / sub-task (${statusCounts['__none__']||0})</option>`;
+  document.getElementById('sprintStatusSelect').innerHTML = statusOpts;
+
+  const assigneeCounts = {};
+  SPRINT_DATA.tickets.forEach(t=>{ const k = t.assignee || '__none__'; assigneeCounts[k] = (assigneeCounts[k]||0)+1; });
+  const assignees = Object.keys(assigneeCounts).filter(k=>k!=='__none__').sort((a,b)=>assigneeCounts[b]-assigneeCounts[a]);
+  let assigneeOpts = '<option value="">All assignees</option>';
+  assignees.forEach(a=>{ assigneeOpts += `<option value="${escAttr2(a)}">${escHtml2(a)} (${assigneeCounts[a]})</option>`; });
+  assigneeOpts += `<option value="__none__">Unassigned (${assigneeCounts['__none__']||0})</option>`;
+  document.getElementById('sprintAssigneeSelect').innerHTML = assigneeOpts;
+
+  document.getElementById('sprintSearchInput').addEventListener('input', e=>{ sprintState.search = e.target.value.trim(); renderSprint(); });
+  document.getElementById('sprintGoalSelect').addEventListener('change', e=>{ sprintState.goal = e.target.value; renderSprint(); });
+  document.getElementById('sprintEpicSelect').addEventListener('change', e=>{ sprintState.epic = e.target.value; renderSprint(); });
+  document.getElementById('sprintStatusSelect').addEventListener('change', e=>{ sprintState.status = e.target.value; renderSprint(); });
+  document.getElementById('sprintAssigneeSelect').addEventListener('change', e=>{ sprintState.assignee = e.target.value; renderSprint(); });
+  document.getElementById('sprintResetBtn').addEventListener('click', ()=>{
+    sprintState.search=''; sprintState.goal=''; sprintState.epic=''; sprintState.status=''; sprintState.assignee='';
+    document.getElementById('sprintSearchInput').value='';
+    document.getElementById('sprintGoalSelect').value='';
+    document.getElementById('sprintEpicSelect').value='';
+    document.getElementById('sprintStatusSelect').value='';
+    document.getElementById('sprintAssigneeSelect').value='';
+    renderSprint();
+  });
+}
+
+function renderSprintKPIs(rows){
+  const total = rows.length;
+  const delivered = rows.filter(t=>isDelivered(t.status)).length;
+  const inFlight = rows.filter(t=>{ const r=stageRank(t.status); return r>=2 && r<=4; }).length;
+  const notStarted = rows.filter(t=>{ const r=stageRank(t.status); return r<=1; }).length;
+  const noGoal = rows.filter(t=>!t.goal).length;
+  const goalsDefined = new Set(SPRINT_DATA.tickets.map(t=>t.goal).filter(Boolean)).size;
+
+  const cards = [
+    { label:'Tickets in this sprint', value: total, foot: total===SPRINT_DATA.tickets.length ? `of ${SPRINT_DATA.tickets.length} total` : `of ${SPRINT_DATA.tickets.length} filtered` },
+    { label:'Delivered', value: delivered, sub: total? Math.round(delivered/total*100)+'%':'0%', foot:'marked ✅ Delivered' },
+    { label:'In flight', value: inFlight, foot:'in progress · code review · staging' },
+    { label:'Not yet started', value: notStarted, foot:'offered · to do' },
+    { label:'No sprint goal linked', value: noGoal, sub: total? Math.round(noGoal/total*100)+'%':'0%', foot: `of ${goalsDefined} goals defined this sprint` },
+  ];
+  document.getElementById('sprintKpiRow').innerHTML = cards.map(c=>`
+    <div class="kpi">
+      <div class="label">${c.label}</div>
+      <div class="value">${c.value}${c.sub?`<small>${c.sub}</small>`:''}</div>
+      <div class="foot">${c.foot}</div>
+    </div>`).join('');
+}
+
+function renderGoalCards(rows){
+  const definedGoals = [...new Set(SPRINT_DATA.tickets.map(t=>t.goal).filter(Boolean))];
+  const buckets = [...definedGoals, null];
+  const el = document.getElementById('goalGrid');
+  el.innerHTML = buckets.map(goal=>{
+    const inGoal = rows.filter(t=> goal ? t.goal===goal : !t.goal);
+    const total = inGoal.length;
+    const delivered = inGoal.filter(t=>isDelivered(t.status)).length;
+    const pct = total ? Math.round(delivered/total*100) : 0;
+    const epics = [...new Set(inGoal.map(t=>t.epic).filter(Boolean))];
+    const isNone = !goal;
+    const key = goal || '__none__';
+    const active = sprintState.goal === key;
+    return `<div class="goalcard ${isNone?'nogoal':''} ${active?'active':''}" data-goal="${escAttr2(key)}">
+      <p class="goalquote">${isNone ? 'Not tied to a defined sprint goal' : '“'+escHtml2(goal)+'”'}</p>
+      <div class="goalchips">${epics.length ? epics.map(e=>`<span class="goalchip">${escHtml2(e)}</span>`).join('') : '<span class="goalchip">No epic tagged</span>'}</div>
+      <div class="goalmeter">
+        <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+        <div class="glabel">${delivered}/${total} delivered &middot; ${pct}%</div>
+      </div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.goalcard').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      const g = card.dataset.goal;
+      sprintState.goal = (sprintState.goal===g) ? '' : g;
+      document.getElementById('sprintGoalSelect').value = sprintState.goal;
+      renderSprint();
+    });
+  });
+}
+
+function renderSprintStageChart(rows){
+  const withStatus = rows.filter(t=>t.status);
+  const noStatusCount = rows.length - withStatus.length;
+  const statuses = [...new Set(withStatus.map(t=>t.status))].sort((a,b)=>stageRank(a)-stageRank(b));
+  const counts = {};
+  statuses.forEach(s=> counts[s] = withStatus.filter(t=>t.status===s).length );
+  const max = Math.max(1, ...statuses.map(s=>counts[s]), noStatusCount);
+  let html = statuses.map(s=>{
+    const pct = Math.max(6, counts[s]/max*100);
+    return `<div class="stage" data-status="${escAttr2(s)}">
+      <div class="name">${escHtml2(s)}</div>
+      <div class="track"><div class="fill" style="width:${pct}%; background:${stageColor(s)}"><span>${counts[s]}</span></div></div>
+    </div>`;
+  }).join('');
+  if(noStatusCount>0){
+    const pct = Math.max(6, noStatusCount/max*100);
+    html += `<div class="stage" data-status="__none__">
+      <div class="name dim">No status (sub-task)</div>
+      <div class="track"><div class="fill" style="width:${pct}%; background:var(--pri-none)"><span>${noStatusCount}</span></div></div>
+    </div>`;
+  }
+  const el = document.getElementById('sprintStageChart');
+  el.innerHTML = html;
+  el.querySelectorAll('.stage').forEach(row=>{
+    row.style.cursor='pointer';
+    row.addEventListener('click', ()=>{
+      const s = row.dataset.status;
+      sprintState.status = (sprintState.status===s) ? '' : s;
+      document.getElementById('sprintStatusSelect').value = sprintState.status;
+      renderSprint();
+    });
+  });
+}
+
+function renderSprintEpicChart(rows){
+  const counts = {};
+  rows.forEach(t=>{ const k = t.epic || '(No epic)'; counts[k] = (counts[k]||0)+1; });
+  const entries = Object.entries(counts).sort((a,b)=> b[1]-a[1] || a[0].localeCompare(b[0]));
+  const max = Math.max(1, ...entries.map(e=>e[1]));
+  const el = document.getElementById('sprintEpicChart');
+  el.innerHTML = entries.map(([label,count])=>{
+    const isNone = label === '(No epic)';
+    const pct = (count/max*100).toFixed(1);
+    return `<div class="barrow ${isNone?'dim':''}" data-epic="${escAttr2(isNone?'__none__':label)}">
+      <div class="barlabel" title="${escAttr2(label)}">${escHtml2(label)}</div>
+      <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+      <div class="val">${count}</div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.barrow').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      const epic = row.dataset.epic;
+      sprintState.epic = (sprintState.epic === epic) ? '' : epic;
+      document.getElementById('sprintEpicSelect').value = sprintState.epic;
+      renderSprint();
+    });
+    row.addEventListener('mousemove', e=>{
+      const label = row.querySelector('.barlabel').textContent;
+      const val = row.querySelector('.val').textContent;
+      showTooltip(e.clientX, e.clientY, `<div class="tt-title">${escHtml2(label)}</div><div class="tt-row"><span class="k" style="background:var(--blue)"></span>${val} ticket${val==1?'':'s'}</div>`);
+    });
+    row.addEventListener('mouseleave', hideTooltip);
+  });
+}
+
+function renderAssigneeChart(rows){
+  const buckets = { delivered:'Delivered', inflight:'In flight', notstarted:'Not started' };
+  const colors = { delivered:'var(--pri-low)', inflight:'var(--stage-2)', notstarted:'var(--pri-none)' };
+  document.getElementById('assigneeLegend').innerHTML = Object.entries(buckets).map(([k,label])=>
+    `<div class="item"><span class="sw" style="background:${colors[k]}"></span>${label}</div>`
+  ).join('');
+
+  const byAssignee = {};
+  rows.forEach(t=>{
+    const k = t.assignee || 'Unassigned';
+    if(!byAssignee[k]) byAssignee[k] = { delivered:0, inflight:0, notstarted:0, total:0 };
+    const r = stageRank(t.status);
+    if(r===5) byAssignee[k].delivered++;
+    else if(r>=2 && r<=4) byAssignee[k].inflight++;
+    else byAssignee[k].notstarted++;
+    byAssignee[k].total++;
+  });
+  const entries = Object.entries(byAssignee).sort((a,b)=> b[1].total - a[1].total);
+  const max = Math.max(1, ...entries.map(([,v])=>v.total));
+
+  const el = document.getElementById('assigneeChart');
+  el.innerHTML = entries.map(([label, v])=>{
+    const widthPct = (v.total/max*100);
+    const segs = Object.keys(buckets).map(k=>{
+      const w = v[k] ? (v[k]/v.total*100) : 0;
+      if(w<=0) return '';
+      return `<div class="seg" data-assignee="${escAttr2(label==='Unassigned'?'__none__':label)}" data-bucket="${k}" data-count="${v[k]}" style="width:${w}%; background:${colors[k]}"></div>`;
+    }).join('');
+    return `<div class="stackrow">
+      <div class="barlabel" title="${escAttr2(label)}">${escHtml2(label)}</div>
+      <div class="track" style="width:${widthPct}%">${segs}</div>
+      <div class="total">${v.total}</div>
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('.seg').forEach(seg=>{
+    seg.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const a = seg.dataset.assignee;
+      sprintState.assignee = (sprintState.assignee===a) ? '' : a;
+      document.getElementById('sprintAssigneeSelect').value = sprintState.assignee;
+      renderSprint();
+    });
+    seg.addEventListener('mousemove', e=>{
+      const bucket = seg.dataset.bucket, count = seg.dataset.count;
+      const label = seg.closest('.stackrow').querySelector('.barlabel').textContent;
+      showTooltip(e.clientX, e.clientY, `<div class="tt-title">${escHtml2(label)}</div><div class="tt-row"><span class="k" style="background:${colors[bucket]}"></span>${buckets[bucket]}: <b>${count}</b></div>`);
+    });
+    seg.addEventListener('mouseleave', hideTooltip);
+  });
+}
+
+function renderSprintTrend(rows){
+  const delivered = rows.filter(t=>isDelivered(t.status) && t.completed).map(t=>t.completed).sort();
+  const svg = document.getElementById('sprintTrendSvg');
+  const W = 640, H = 200, padL = 26, padR = 12, padT = 14, padB = 26;
+  const innerW = W - padL - padR, innerH = H - padT - padB;
+
+  if(delivered.length < 2){
+    svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle" class="axislabel">Not enough delivered tickets with a completion date in this filter</text>`;
+    return;
+  }
+
+  const days = [...new Set(delivered)];
+  const cumulative = days.map(d => delivered.filter(x=>x<=d).length);
+  const max = cumulative[cumulative.length-1];
+  const x = i => padL + (i/(days.length-1))*innerW;
+  const y = v => padT + innerH - (v/max)*innerH;
+
+  let gridSvg = '';
+  const steps = 4;
+  for(let s=0;s<=steps;s++){
+    const val = Math.round(max/steps*s);
+    const gy = y(val);
+    gridSvg += `<line class="gridline" x1="${padL}" x2="${W-padR}" y1="${gy}" y2="${gy}"/>`;
+    gridSvg += `<text class="axislabel" x="${padL-6}" y="${gy+3}" text-anchor="end">${val}</text>`;
+  }
+
+  const labelEvery = Math.ceil(days.length/6);
+  let xLabels = '';
+  days.forEach((d,i)=>{
+    if(i%labelEvery===0 || i===days.length-1){
+      const [yy,mm,dd] = d.split('-');
+      const short = new Date(+yy, +mm-1, +dd).toLocaleString('en-US',{month:'short', day:'numeric'});
+      xLabels += `<text class="axislabel" x="${x(i)}" y="${H-8}" text-anchor="middle">${short}</text>`;
+    }
+  });
+
+  const hitCols = days.map((d,i)=>{
+    const cw = innerW/days.length;
+    const cx = padL + i*cw;
+    return `<g class="hitrow" data-i="${i}"><rect x="${cx}" y="${padT}" width="${cw}" height="${innerH}"/></g>`;
+  }).join('');
+
+  const linePts = days.map((d,i)=>`${x(i)},${y(cumulative[i])}`).join(' L ');
+  svg.innerHTML = `
+    ${gridSvg}
+    <path class="area" d="M ${x(0)},${y(0)} L ${linePts} L ${x(days.length-1)},${y(0)} Z"/>
+    <path class="line" d="M ${linePts}"/>
+    ${xLabels}
+    <line class="crosshair" id="sprintTrendCrosshair" y1="${padT}" y2="${padT+innerH}"/>
+    <circle class="hoverdot" id="sprintTrendDot" r="4.5"/>
+    ${hitCols}
+  `;
+
+  const crosshair = document.getElementById('sprintTrendCrosshair');
+  const dot = document.getElementById('sprintTrendDot');
+  svg.querySelectorAll('.hitrow').forEach(g=>{
+    g.addEventListener('mousemove', e=>{
+      const i = +g.dataset.i;
+      const cx = x(i), cy = y(cumulative[i]);
+      crosshair.setAttribute('x1', cx); crosshair.setAttribute('x2', cx); crosshair.style.opacity = 1;
+      dot.setAttribute('cx', cx); dot.setAttribute('cy', cy); dot.style.opacity = 1;
+      const [yy,mm,dd] = days[i].split('-');
+      const full = new Date(+yy, +mm-1, +dd).toLocaleString('en-US',{month:'long', day:'numeric'});
+      showTooltip(e.clientX, e.clientY, `<div class="tt-title">${full}</div><div class="tt-row"><span class="k" style="background:var(--blue)"></span><b>${cumulative[i]}</b> delivered so far</div>`);
+    });
+    g.addEventListener('mouseleave', ()=>{ crosshair.style.opacity=0; dot.style.opacity=0; hideTooltip(); });
+  });
+}
+
+let sprintSortKey = 'completed', sprintSortDir = -1;
+function renderSprintTable(rows){
+  const sorted = [...rows].sort((a,b)=>{
+    let av = a[sprintSortKey] ?? '', bv = b[sprintSortKey] ?? '';
+    if(sprintSortKey==='status'){ av = stageRank(a.status); bv = stageRank(b.status); }
+    if(sprintSortKey==='points'){ av = a.points ?? -1; bv = b.points ?? -1; }
+    if(av<bv) return -1*sprintSortDir;
+    if(av>bv) return 1*sprintSortDir;
+    return 0;
+  });
+  const body = document.getElementById('sprintTicketBody');
+  if(!sorted.length){
+    body.innerHTML = `<tr><td colspan="7"><div class="emptystate">No tickets match the current filters.</div></td></tr>`;
+    return;
+  }
+  body.innerHTML = sorted.map(t=>{
+    const pillClass = pillClassForStatus(t.status);
+    return `<tr>
+      <td class="name">${escHtml2(t.name)}</td>
+      <td>${t.epic ? escHtml2(t.epic) : '<span class="statustext">—</span>'}</td>
+      <td class="statustext" title="${t.goal?escAttr2(t.goal):''}">${t.goal ? escHtml2(t.goal.length>44?t.goal.slice(0,44)+'…':t.goal) : '—'}</td>
+      <td><span class="pill ${pillClass}">${t.status ? escHtml2(t.status) : 'No status'}</span></td>
+      <td class="statustext">${t.assignee ? escHtml2(t.assignee) : 'Unassigned'}</td>
+      <td class="statustext">${t.points ?? '—'}</td>
+      <td class="statustext">${t.completed || '—'}</td>
+    </tr>`;
+  }).join('');
+
+  document.querySelectorAll('table.tickets thead th[data-sprintsort]').forEach(th=>{
+    const key = th.dataset.sprintsort;
+    th.querySelector('.arrow').textContent = key===sprintSortKey ? (sprintSortDir===1?'↑':'↓') : '';
+  });
+}
+
+document.querySelectorAll('table.tickets thead th[data-sprintsort]').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.sprintsort;
+    if(sprintSortKey===key) sprintSortDir *= -1; else { sprintSortKey = key; sprintSortDir = key==='completed' ? -1 : 1; }
+    renderSprintTable(applySprintFilters());
+  });
+});
+
+function renderSprint(){
+  const rows = applySprintFilters();
+  document.getElementById('sprintResultCount').textContent = `${rows.length} of ${SPRINT_DATA.tickets.length} tickets`;
+  renderSprintKPIs(rows);
+  renderGoalCards(rows);
+  renderSprintStageChart(rows);
+  renderSprintEpicChart(rows);
+  renderAssigneeChart(rows);
+  renderSprintTrend(rows);
+  renderSprintTable(rows);
+}
+
+buildSprintFilterBar();
+renderSprint();
+
+// ---------------- tab switching ----------------
+const tabButtons = { backlog: document.getElementById('tabBtnBacklog'), sprints: document.getElementById('tabBtnSprints') };
+const tabPanels = { backlog: document.getElementById('panel-backlog'), sprints: document.getElementById('panel-sprints') };
+function activateTab(name){
+  Object.keys(tabPanels).forEach(k=>{
+    tabPanels[k].hidden = (k !== name);
+    tabButtons[k].classList.toggle('active', k === name);
+  });
+  if(location.hash.slice(1) !== name) history.replaceState(null, '', '#'+name);
+}
+tabButtons.backlog.addEventListener('click', ()=>activateTab('backlog'));
+tabButtons.sprints.addEventListener('click', ()=>activateTab('sprints'));
+if(location.hash === '#sprints') activateTab('sprints');
 </script>
