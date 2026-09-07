@@ -1,0 +1,830 @@
+<title>Booking Engine Backlog</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Inter+Tight:wght@600;700;800&display=swap">
+<style>
+  :root{
+    color-scheme: light;
+    --page:            #f9f9f7;
+    --surface:         #fcfcfb;
+    --surface-raised:  #ffffff;
+    --text-primary:    #0b0b0b;
+    --text-secondary:  #52514e;
+    --text-muted:      #898781;
+    --gridline:        #e1e0d9;
+    --baseline:        #c3c2b7;
+    --border:          rgba(11,11,11,0.10);
+    --border-strong:   rgba(11,11,11,0.16);
+
+    --blue:            #2a78d6;
+    --blue-wash:       rgba(42,120,214,0.10);
+    --stage-1:         #9ec5f4;
+    --stage-2:         #2a78d6;
+    --stage-3:         #104281;
+
+    --pri-high:        #d03b3b;
+    --pri-high-bg:     #fbe4e2;
+    --pri-medium:      #c98500;
+    --pri-medium-bg:   #fdefd2;
+    --pri-low:         #0ca30c;
+    --pri-low-bg:      #dff3df;
+    --pri-none:        #898781;
+    --pri-none-bg:     #eceae4;
+
+    --chip-text-on-strong: #ffffff;
+
+    --shadow: 0 1px 2px rgba(11,11,11,0.04), 0 8px 24px -12px rgba(11,11,11,0.10);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      color-scheme: dark;
+      --page:            #0d0d0d;
+      --surface:         #1a1a19;
+      --surface-raised:  #202020;
+      --text-primary:    #ffffff;
+      --text-secondary:  #c3c2b7;
+      --text-muted:      #918f88;
+      --gridline:        #2c2c2a;
+      --baseline:        #3a3a37;
+      --border:          rgba(255,255,255,0.10);
+      --border-strong:   rgba(255,255,255,0.16);
+
+      --blue:            #3987e5;
+      --blue-wash:       rgba(57,135,229,0.14);
+      --stage-1:         #6da7ec;
+      --stage-2:         #3987e5;
+      --stage-3:         #1c5cab;
+
+      --pri-high:        #e66767;
+      --pri-high-bg:     rgba(230,103,103,0.16);
+      --pri-medium:      #e8ac2e;
+      --pri-medium-bg:   rgba(232,172,46,0.16);
+      --pri-low:         #2fbf2f;
+      --pri-low-bg:      rgba(47,191,47,0.15);
+      --pri-none:        #918f88;
+      --pri-none-bg:     rgba(145,143,136,0.18);
+
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px -14px rgba(0,0,0,0.55);
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:            #0d0d0d;
+    --surface:         #1a1a19;
+    --surface-raised:  #202020;
+    --text-primary:    #ffffff;
+    --text-secondary:  #c3c2b7;
+    --text-muted:      #918f88;
+    --gridline:        #2c2c2a;
+    --baseline:        #3a3a37;
+    --border:          rgba(255,255,255,0.10);
+    --border-strong:   rgba(255,255,255,0.16);
+
+    --blue:            #3987e5;
+    --blue-wash:       rgba(57,135,229,0.14);
+    --stage-1:         #6da7ec;
+    --stage-2:         #3987e5;
+    --stage-3:         #1c5cab;
+
+    --pri-high:        #e66767;
+    --pri-high-bg:     rgba(230,103,103,0.16);
+    --pri-medium:      #e8ac2e;
+    --pri-medium-bg:   rgba(232,172,46,0.16);
+    --pri-low:         #2fbf2f;
+    --pri-low-bg:      rgba(47,191,47,0.15);
+    --pri-none:        #918f88;
+    --pri-none-bg:     rgba(145,143,136,0.18);
+
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 12px 28px -14px rgba(0,0,0,0.55);
+  }
+
+  *{ box-sizing:border-box; }
+  html,body{ background:var(--page); }
+  body{
+    margin:0; padding:0;
+    font-family:"Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    color:var(--text-primary);
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{ max-width:1240px; margin:0 auto; padding:28px 24px 72px; }
+
+  /* ---------- header ---------- */
+  header.top{
+    display:flex; align-items:flex-start; justify-content:space-between; gap:24px;
+    padding-bottom:22px; margin-bottom:22px; border-bottom:1px solid var(--border);
+    flex-wrap:wrap;
+  }
+  .eyebrow{
+    font-size:11.5px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--blue); margin:0 0 8px;
+  }
+  h1{
+    font-family:"Inter Tight","Inter",sans-serif;
+    font-size:30px; font-weight:800; letter-spacing:-0.01em; margin:0 0 6px; text-wrap:balance;
+  }
+  .sub{ color:var(--text-secondary); font-size:14px; margin:0; max-width:56ch; line-height:1.5; }
+  .meta{ text-align:right; font-size:12.5px; color:var(--text-muted); line-height:1.7; white-space:nowrap; }
+  .meta b{ color:var(--text-secondary); font-weight:600; }
+
+  /* ---------- filter bar ---------- */
+  .filterbar{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:10px 12px; margin-bottom:22px; box-shadow:var(--shadow);
+  }
+  .filterbar .flabel{ font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); margin-right:2px; }
+  .search{
+    display:flex; align-items:center; gap:6px;
+    background:var(--page); border:1px solid var(--border); border-radius:8px;
+    padding:7px 10px; min-width:220px; flex:1 1 220px;
+  }
+  .search svg{ flex:none; opacity:0.55; }
+  .search input{
+    border:0; outline:0; background:transparent; color:var(--text-primary); font:inherit; font-size:13px; width:100%;
+  }
+  .search input::placeholder{ color:var(--text-muted); }
+  select.fselect{
+    font:inherit; font-size:13px; color:var(--text-primary); background:var(--page);
+    border:1px solid var(--border); border-radius:8px; padding:7px 28px 7px 10px;
+    appearance:none; -webkit-appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23898781' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat:no-repeat; background-position:right 10px center; cursor:pointer;
+  }
+  .chipgroup{ display:flex; gap:6px; flex-wrap:wrap; }
+  .chip-toggle{
+    font:inherit; font-size:12.5px; font-weight:600; color:var(--text-secondary);
+    background:var(--page); border:1px solid var(--border); border-radius:999px;
+    padding:6px 12px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;
+    transition:background .12s ease, border-color .12s ease, color .12s ease;
+  }
+  .chip-toggle .dot{ width:8px; height:8px; border-radius:50%; background:currentColor; opacity:.85; }
+  .chip-toggle:hover{ border-color:var(--border-strong); }
+  .chip-toggle.active{ color:#fff; border-color:transparent; }
+  .chip-toggle.active.p-High{ background:var(--pri-high); }
+  .chip-toggle.active.p-Medium{ background:var(--pri-medium); color:#1a1400; }
+  .chip-toggle.active.p-Low{ background:var(--pri-low); }
+  .chip-toggle.active.p-None{ background:var(--pri-none); }
+  .spacer{ flex:1 1 auto; }
+  .resetlink{
+    font-size:12.5px; font-weight:600; color:var(--blue); background:none; border:0; cursor:pointer; padding:6px 4px;
+    white-space:nowrap;
+  }
+  .resultcount{ font-size:12.5px; color:var(--text-muted); white-space:nowrap; }
+
+  /* ---------- KPI row ---------- */
+  .kpis{ display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin-bottom:22px; }
+  .kpi{
+    background:var(--surface); border:1px solid var(--border); border-radius:12px;
+    padding:16px 16px 14px; box-shadow:var(--shadow); min-width:0;
+  }
+  .kpi .label{ font-size:12px; color:var(--text-muted); font-weight:600; margin-bottom:8px; }
+  .kpi .value{ font-size:26px; font-weight:800; letter-spacing:-0.01em; font-family:"Inter Tight","Inter",sans-serif; }
+  .kpi .value small{ font-size:14px; font-weight:600; color:var(--text-secondary); margin-left:2px; }
+  .kpi .foot{ font-size:11.5px; color:var(--text-muted); margin-top:4px; }
+  .kpi.warn .value{ color:var(--pri-high); }
+
+  /* ---------- chart cards ---------- */
+  .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; align-items:stretch; }
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:14px;
+    padding:20px 22px 18px; box-shadow:var(--shadow); margin-bottom:16px;
+  }
+  .grid2 > .card{ margin-bottom:0; }
+  .card h2{ font-size:15px; font-weight:700; margin:0 0 2px; letter-spacing:-0.005em; }
+  .card .cardsub{ font-size:12.5px; color:var(--text-muted); margin:0 0 16px; }
+  .legend{ display:flex; gap:16px; flex-wrap:wrap; margin-bottom:14px; }
+  .legend .item{ display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-secondary); font-weight:500; }
+  .legend .sw{ width:10px; height:10px; border-radius:2.5px; flex:none; }
+
+  .barrow{ display:flex; align-items:center; gap:10px; margin:0 0 5px; cursor:pointer; }
+  .barrow:last-child{ margin-bottom:0; }
+  .barrow .barlabel{
+    width:190px; flex:none; font-size:12.5px; color:var(--text-secondary); font-weight:500;
+    text-overflow:ellipsis; overflow:hidden; white-space:nowrap;
+  }
+  .barrow.dim .barlabel{ color:var(--text-muted); font-style:italic; }
+  .barrow .track{ position:relative; flex:1 1 auto; height:22px; background:var(--gridline); border-radius:4px; overflow:visible; }
+  .barrow .fill{
+    position:absolute; left:0; top:0; height:100%; border-radius:4px;
+    background:var(--blue); transition:filter .1s ease, opacity .12s ease;
+  }
+  .barrow.dim .fill{ background:var(--text-muted); opacity:0.55; }
+  .barrow:hover .fill{ filter:brightness(1.08); }
+  .barrow .val{ width:34px; flex:none; text-align:right; font-size:12.5px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--text-primary); }
+  .barrow.dim .val{ color:var(--text-muted); font-weight:600; }
+
+  .stackrow{ display:flex; align-items:center; gap:10px; margin:0 0 8px; cursor:default; }
+  .stackrow:last-child{ margin-bottom:0; }
+  .stackrow .barlabel{ width:190px; flex:none; font-size:12.5px; color:var(--text-secondary); font-weight:500; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; }
+  .stackrow .track{ position:relative; flex:1 1 auto; height:22px; border-radius:4px; display:flex; gap:2px; }
+  .stackrow .seg{ height:100%; position:relative; cursor:pointer; }
+  .stackrow .seg:first-child{ border-top-left-radius:4px; border-bottom-left-radius:4px; }
+  .stackrow .seg:last-child{ border-top-right-radius:4px; border-bottom-right-radius:4px; }
+  .stackrow .total{ width:30px; flex:none; text-align:right; font-size:12.5px; font-weight:700; font-variant-numeric:tabular-nums; color:var(--text-primary); }
+
+  .stage-wrap{ display:flex; flex-direction:column; gap:14px; }
+  .stage{ display:flex; align-items:center; gap:14px; }
+  .stage .num{ width:30px; flex:none; text-align:right; font-size:18px; font-weight:800; font-family:"Inter Tight","Inter",sans-serif; color:var(--text-primary); }
+  .stage .track{ position:relative; flex:1 1 auto; height:26px; background:var(--gridline); border-radius:5px; }
+  .stage .fill{ position:absolute; left:0; top:0; height:100%; border-radius:5px; display:flex; align-items:center; }
+  .stage .fill span{ font-size:11.5px; font-weight:700; color:#fff; padding-left:10px; white-space:nowrap; }
+  .stage .name{ width:120px; flex:none; font-size:12.5px; font-weight:600; color:var(--text-secondary); }
+  .stage-arrow{ color:var(--text-muted); font-size:11px; padding-left:44px; }
+
+  /* trend chart */
+  .trendwrap{ position:relative; }
+  svg.trend{ width:100%; height:200px; display:block; overflow:visible; }
+  .trend .gridline{ stroke:var(--gridline); stroke-width:1; }
+  .trend .axislabel{ fill:var(--text-muted); font-size:10.5px; font-family:"Inter",sans-serif; }
+  .trend .area{ fill:var(--blue); opacity:0.12; }
+  .trend .line{ fill:none; stroke:var(--blue); stroke-width:2; stroke-linejoin:round; stroke-linecap:round; }
+  .trend .hoverdot{ fill:var(--blue); stroke:var(--surface); stroke-width:2; opacity:0; }
+  .trend .crosshair{ stroke:var(--baseline); stroke-width:1; opacity:0; }
+  .trend .hitrow rect{ fill:transparent; }
+
+  .tooltip{
+    position:fixed; pointer-events:none; z-index:50;
+    background:var(--surface-raised); border:1px solid var(--border-strong); border-radius:8px;
+    padding:8px 11px; font-size:12px; box-shadow:0 8px 24px -8px rgba(0,0,0,0.35);
+    opacity:0; transform:translate(-50%,-100%); transition:opacity .08s ease;
+    max-width:260px;
+  }
+  .tooltip.show{ opacity:1; }
+  .tooltip .tt-title{ font-weight:700; color:var(--text-primary); margin-bottom:3px; }
+  .tooltip .tt-row{ display:flex; align-items:center; gap:6px; color:var(--text-secondary); }
+  .tooltip .tt-row .k{ width:9px; height:2.5px; border-radius:2px; display:inline-block; }
+  .tooltip .tt-row b{ color:var(--text-primary); font-variant-numeric:tabular-nums; }
+
+  /* ---------- table ---------- */
+  .tablecard{ padding-bottom:8px; }
+  .tablewrap{ overflow-x:auto; border:1px solid var(--border); border-radius:10px; }
+  table.tickets{ width:100%; border-collapse:collapse; font-size:12.8px; min-width:760px; }
+  table.tickets thead th{
+    position:sticky; top:0; background:var(--surface); text-align:left; font-size:11px; font-weight:700;
+    text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); padding:10px 12px;
+    border-bottom:1px solid var(--border); cursor:pointer; white-space:nowrap;
+  }
+  table.tickets thead th:hover{ color:var(--text-secondary); }
+  table.tickets thead th .arrow{ margin-left:3px; opacity:0.6; }
+  table.tickets tbody td{ padding:9px 12px; border-bottom:1px solid var(--border); color:var(--text-secondary); vertical-align:middle; }
+  table.tickets tbody tr:last-child td{ border-bottom:0; }
+  table.tickets tbody tr:hover{ background:var(--blue-wash); }
+  table.tickets td.name{ color:var(--text-primary); font-weight:500; max-width:360px; }
+  .scrollbody{ max-height:520px; overflow-y:auto; }
+  .pill{
+    display:inline-flex; align-items:center; padding:3px 9px; border-radius:999px;
+    font-size:11px; font-weight:700; white-space:nowrap;
+  }
+  .pill-High{ background:var(--pri-high-bg); color:var(--pri-high); }
+  .pill-Medium{ background:var(--pri-medium-bg); color:var(--pri-medium); }
+  .pill-Low{ background:var(--pri-low-bg); color:var(--pri-low); }
+  .pill-None{ background:var(--pri-none-bg); color:var(--text-muted); }
+  .statustext{ font-size:12px; color:var(--text-secondary); }
+  .emptystate{ padding:36px 12px; text-align:center; color:var(--text-muted); font-size:13px; }
+
+  footer.note{ margin-top:20px; font-size:11.5px; color:var(--text-muted); line-height:1.6; }
+
+  @media (max-width:920px){
+    .kpis{ grid-template-columns:repeat(2,1fr); }
+    .grid2{ grid-template-columns:1fr; }
+    header.top{ flex-direction:column; }
+    .meta{ text-align:left; }
+    .barrow .barlabel, .stackrow .barlabel{ width:120px; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="top">
+    <div>
+      <p class="eyebrow">Product Backlog &middot; Filtered view</p>
+      <h1>Booking Engine backlog</h1>
+      <p class="sub">Every open Asana item tagged <strong>Product = Booking Engine</strong> — what's being asked for, how urgent it is, and where it sits in the pipeline.</p>
+    </div>
+    <div class="meta">
+      <div><b id="metaTotal">181</b> tickets in scope</div>
+      <div>Exported from Asana &middot; generated 2026-09-07</div>
+    </div>
+  </header>
+
+  <div class="filterbar">
+    <span class="flabel">Filter</span>
+    <div class="search">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.6" stroke="currentColor" stroke-width="1.4"/><path d="M9.6 9.6L13 13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      <input id="searchInput" type="text" placeholder="Search ticket names…">
+    </div>
+    <select id="epicSelect" class="fselect"></select>
+    <select id="statusSelect" class="fselect">
+      <option value="">All statuses</option>
+      <option value="Backlog">Backlog</option>
+      <option value="Estimated">Estimated</option>
+      <option value="Upcoming Sprints">Upcoming Sprints</option>
+    </select>
+    <div class="chipgroup" id="priorityChips"></div>
+    <div class="spacer"></div>
+    <span class="resultcount" id="resultCount"></span>
+    <button class="resetlink" id="resetBtn">Reset filters</button>
+  </div>
+
+  <div class="kpis" id="kpiRow"></div>
+
+  <div class="card">
+    <h2>Which epics are requested most</h2>
+    <p class="cardsub">Ticket count per Epic (Booking Engine only). Bars in gray are outside your current filter or represent tickets with no Epic assigned. Click a bar to filter the table below.</p>
+    <div id="epicChart"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>Priority mix</h2>
+      <p class="cardsub">Share of tickets by priority. Click a segment to filter.</p>
+      <div id="priorityBar"></div>
+    </div>
+    <div class="card">
+      <h2>Pipeline stage</h2>
+      <p class="cardsub">Where tickets sit on the way to a sprint.</p>
+      <div class="stage-wrap" id="stageChart"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Priority by epic</h2>
+    <p class="cardsub">The epics carrying the most urgent (High-priority) demand rise to the top — sorted by total ticket count.</p>
+    <div class="legend" id="epicPriorityLegend"></div>
+    <div id="epicPriorityChart"></div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <h2>Backlog growth</h2>
+      <p class="cardsub">New Booking Engine tickets created per month.</p>
+      <div class="trendwrap">
+        <svg class="trend" id="trendSvg" viewBox="0 0 640 200" preserveAspectRatio="none"></svg>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Where requests come from</h2>
+      <p class="cardsub">Reported source of the ticket, where logged.</p>
+      <div id="sourceChart"></div>
+    </div>
+  </div>
+
+  <div class="card tablecard">
+    <h2>Ticket explorer</h2>
+    <p class="cardsub">Every ticket behind the charts above — filtered and sorted live.</p>
+    <div class="tablewrap">
+      <div class="scrollbody">
+        <table class="tickets">
+          <thead>
+            <tr>
+              <th data-sort="name">Ticket<span class="arrow"></span></th>
+              <th data-sort="epic">Epic<span class="arrow"></span></th>
+              <th data-sort="priority">Priority<span class="arrow"></span></th>
+              <th data-sort="status">Status<span class="arrow"></span></th>
+              <th data-sort="source">Source<span class="arrow"></span></th>
+              <th data-sort="created">Created<span class="arrow"></span></th>
+            </tr>
+          </thead>
+          <tbody id="ticketBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <footer class="note">
+    Scope: 181 backlog items where Product = Booking Engine, exported from the Asana "Product Backlog" project on 2026&#8209;09&#8209;07.
+    "No Epic" / "No priority" reflect fields left blank in Asana at export time, not a real category — treat their share as a data-hygiene signal rather than product signal.
+  </footer>
+
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const TICKETS = [{"id": "1218177338350837", "name": "German version of our IBE still has some English words", "epic": "I18n and l10n (translations, currencies, etc.)", "priority": "Medium", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-09-04"}, {"id": "1217671519051021", "name": "Promocode applied to some rates - Starting price in Rooms step", "epic": "Promocodes", "priority": "Medium", "status": "Backlog", "source": null, "objective": "Enhance booking engine stability", "quarter": null, "type": null, "points": null, "created": "2026-08-21"}, {"id": "1217664996980976", "name": "UI/UX for Pay later option", "epic": "IBE check-out and payments", "priority": null, "status": "Backlog", "source": null, "objective": "Improve IBE conversion", "quarter": null, "type": null, "points": null, "created": "2026-08-20"}, {"id": "1217600662328230", "name": "Aethos Request - desktop direct call out", "epic": "Embedded Convert for IBE", "priority": null, "status": "Backlog", "source": "Customer", "objective": "Add IBE customization options", "quarter": null, "type": null, "points": null, "created": "2026-08-19"}, {"id": "1217529973788947", "name": "Aethos - Travel Agent Reservations fields in the checkout form", "epic": "IBE check-out and payments", "priority": null, "status": "Backlog", "source": "CS Team", "objective": "Add IBE customization options", "quarter": null, "type": null, "points": null, "created": "2026-08-17"}, {"id": "1217229289705805", "name": "[Feature request for OpenGDS] KOMPAS | Single bed in the filters in OpenGDS", "epic": null, "priority": "Low", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-08-06"}, {"id": "1217237580490968", "name": "[Feature request] KOMPAS | Mailchimp integrations for loyalty light feature leads", "epic": null, "priority": "Low", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-08-06"}, {"id": "1217211309549949", "name": "Follow up on \"Checkout form - Field Simplification\" - Scope: Stripe checkout form", "epic": "IBE check-out and payments", "priority": "High", "status": "Backlog", "source": null, "objective": "Improve IBE conversion", "quarter": null, "type": null, "points": null, "created": "2026-08-06"}, {"id": "1217211309549940", "name": "Modify selections throughout IBE", "epic": "IBE UI/UX", "priority": null, "status": "Backlog", "source": null, "objective": "Improve IBE conversion", "quarter": null, "type": null, "points": null, "created": "2026-08-06"}, {"id": "1216742678121589", "name": "On-call schedule platform tool - follow ups", "epic": "IBE observability and monitoring", "priority": null, "status": "Backlog", "source": null, "objective": "Enhance booking engine stability", "quarter": null, "type": null, "points": null, "created": "2026-07-21"}, {"id": "1216755444397728", "name": "Website build in Duda doesn't generate llms.txt files for our IBE", "epic": null, "priority": "Low", "status": "Backlog", "source": "Onboarding Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-07-21"}, {"id": "1216557310569266", "name": "[Deferred] Follow ups on dark-mode IBE", "epic": null, "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-07-14"}, {"id": "1216416961092980", "name": "Refund amount calculation: Penalty unit of second night for 1 night bookings", "epic": "Core features logic (rates, availability, child, extra bed, etc)", "priority": "Low", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-07-09"}, {"id": "1215695572819317", "name": "[UX] Follow up on \"'Something went wrong' error upon cancelling booking (channel manger validation failed)\"", "epic": "IBE UI/UX", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-06-16"}, {"id": "1215315233008707", "name": "[Duplicate] SBI | Loyalty modal - Simplifying the sign-up form", "epic": "Loyalty (Bookingwhizzz)", "priority": "High", "status": "Backlog", "source": "Customer", "objective": null, "quarter": "Q3 2026", "type": null, "points": null, "created": "2026-06-02"}, {"id": "1215156356526819", "name": "Can we adjust the email translation in German?", "epic": "I18n and l10n (translations, currencies, etc.)", "priority": "Low", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-05-27"}, {"id": "1214599779774315", "name": "Deep Link (pr rates) -> Highlight/filter dates in calendar step", "epic": "Deep-links", "priority": "High", "status": "Backlog", "source": "Customer", "objective": null, "quarter": "Q3 2026", "type": null, "points": null, "created": "2026-05-07"}, {"id": "1214706926411573", "name": "[Aethos] Widescreen IBE - feedback", "epic": null, "priority": "Medium", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-05-11"}, {"id": "1214992676009614", "name": "Building the 'Summary cart' and do the calculation on our end", "epic": "IBE stability", "priority": null, "status": "Backlog", "source": null, "objective": "Enhance booking engine stability", "quarter": null, "type": null, "points": null, "created": "2026-05-22"}, {"id": "1213074418843193", "name": "Add Korean Language in BE - Cross Hotels & Resorts", "epic": null, "priority": "High", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-02-04"}, {"id": "1214895610457361", "name": "AI Enrichment: Road to production", "epic": "AI in IBE", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": "Q2 2026", "type": null, "points": null, "created": "2026-05-18"}, {"id": "1214727852719416", "name": "Search UX improvement for bigger group of guests (1 room vs multi-room) []", "epic": "Search function", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-05-12"}, {"id": "1214625971824685", "name": "Questions from Aethos - IBE features", "epic": null, "priority": "Medium", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-05-08"}, {"id": "1214712680311553", "name": "[Duplicate] Total and room revenue numbers in IBE analytics dashboard", "epic": "IBE reporting", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": "Q2 2026", "type": null, "points": null, "created": "2026-05-11"}, {"id": "1214255557742679", "name": "SBI | Confirmation email for Logged in members", "epic": "Loyalty (Bookingwhizzz)", "priority": "Low", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-04-24"}, {"id": "1214208000957998", "name": "IBE properties data and OpenGDS daily sync issue: Property phone number", "epic": null, "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-04-23"}, {"id": "1214141302600593", "name": "Follow up on \"Allow adding multiple children age categories for date picker and chain date picker widgets\" - Update in search function", "epic": null, "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-04-21"}, {"id": "1214128089409839", "name": "Currency of reservations in OpenGDS - Host vs property", "epic": null, "priority": "Low", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-04-20"}, {"id": "1213211114120404", "name": "[Spike] 'Extras' data (for older records) for Extras reporting", "epic": "IBE reporting", "priority": null, "status": "Backlog", "source": null, "objective": "Implement advanced IBE reporting (chain reporting + invoicing)", "quarter": null, "type": null, "points": null, "created": "2026-02-10"}, {"id": "1213278651169617", "name": "Alpin | Question new website", "epic": null, "priority": "Low", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-02-16"}, {"id": "1213880520970075", "name": "[UX] Improvements on 'Supplements' section - Make it more visible", "epic": "IBE UI/UX", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-03-30"}, {"id": "1213816014334543", "name": "Add support for geo-targeted rates (new feature from OpenGDS)", "epic": "Core features logic (rates, availability, child, extra bed, etc)", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": "Q2 2026", "type": null, "points": null, "created": "2026-03-27"}, {"id": "1213816014334536", "name": "Add support for device based rate settings (new feature from OpenGDS)", "epic": "Core features logic (rates, availability, child, extra bed, etc)", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": "Q2 2026", "type": null, "points": null, "created": "2026-03-27"}, {"id": "1213816014334526", "name": "Add support for the Booking validity period (new feature from OpenGDS)", "epic": "Core features logic (rates, availability, child, extra bed, etc)", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": "Q2 2026", "type": null, "points": null, "created": "2026-03-27"}, {"id": "1213803055101787", "name": "Delayed Payment Capture on 100% Deposit Rates for Away Bangkok Sukhumvit", "epic": "IBE check-out and payments", "priority": "High", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-03-25"}, {"id": "1213786521841842", "name": "Retrying payment after 'something went wrong'", "epic": "IBE check-out and payments", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-03-24"}, {"id": "1213684992930681", "name": "[Awaiting account setup] CCG with Apple Pay - Configure and enable Apple Pay", "epic": "IBE check-out and payments", "priority": "High", "status": "Backlog", "source": null, "objective": "Extend PCI Booking integration (payment library)", "quarter": null, "type": null, "points": null, "created": "2026-03-17"}, {"id": "1213684992930672", "name": "[Paused] CCG with ApplePay/GooglePay - Platform configuration of credentials", "epic": "IBE check-out and payments", "priority": "High", "status": "Backlog", "source": null, "objective": "Extend PCI Booking integration (payment library)", "quarter": null, "type": null, "points": null, "created": "2026-03-17"}, {"id": "1213607458133481", "name": "Promo Code “Special Rate” Tag Display on NRF & BFR Rates for Swiss-Belsuites Victoria Park, Auckland", "epic": null, "priority": "High", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-03-10"}, {"id": "1209022494059455", "name": "HC IBE DC - Min rate in rates step", "epic": null, "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2024-12-20"}, {"id": "1213407614253886", "name": "Availability step with no room option to select (checkout must be a date after checkin)", "epic": "IBE stability", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-02-24"}, {"id": "1213432677219853", "name": "IBE tracking", "epic": "Tracking", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-02-25"}, {"id": "1213551879003020", "name": "Chain level promocodes (logic)", "epic": "Promocodes", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": "Q1 2026, Q2 2026", "type": null, "points": null, "created": "2026-03-05"}, {"id": "1213551875701884", "name": "[To be further discussed] Entry level members and applied promocode", "epic": "Loyalty (Bookingwhizzz)", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": "Q1 2026, Q2 2026", "type": null, "points": null, "created": "2026-03-05"}, {"id": "1213527513830169", "name": "(Specific case) Multi-room booking with supplement - IBE flow breaks", "epic": "IBE stability", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-03-04"}, {"id": "1213492896088680", "name": "Yazz Collective | The hotel accept children but not a particular room type", "epic": null, "priority": "Medium", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-03-02"}, {"id": "1213447018916668", "name": "Mobile - Interaction teaser - IBE consent box", "epic": null, "priority": null, "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-02-26"}, {"id": "1210585802383141", "name": "Casa | Issues with supplement in multi-room reservations - Info sent to Mews", "epic": null, "priority": "Medium", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-06-19"}, {"id": "1213366210298266", "name": "Max # of number of rooms allowed not working", "epic": "Core features logic (rates, availability, child, extra bed, etc)", "priority": "High", "status": "Backlog", "source": "Customer", "objective": "Enhance booking engine stability", "quarter": null, "type": null, "points": null, "created": "2026-02-23"}, {"id": "1213417322105006", "name": "Alp Art Hotel - IBE and date picker widget - Guest count for multi-room bookings", "epic": "Search function", "priority": "Medium", "status": "Backlog", "source": "PS Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-02-24"}, {"id": "1213380530995683", "name": "CCG -> Refreshing page while processing", "epic": "IBE check-out and payments", "priority": "Medium", "status": "Backlog", "source": null, "objective": "Enhance booking engine stability", "quarter": null, "type": null, "points": null, "created": "2026-02-21"}, {"id": "1213379909579245", "name": "\"Mobile (iphone) Calendar -> sometime check out date is not being selected (needs 2nd attempt)\"", "epic": "IBE UI/UX", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-02-20"}, {"id": "1213361566914039", "name": "IBE calendar step -> Tool tips on mobile", "epic": "IBE UI/UX", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-02-20"}, {"id": "1213317802771890", "name": "[Check the idea] Rates UX for logged in BW members", "epic": "Loyalty (Bookingwhizzz)", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": "Q1 2026", "type": null, "points": null, "created": "2026-02-18"}, {"id": "1213317802771885", "name": "Access code applied -> Hide public rate (behind 'view more' button)", "epic": "Promocodes", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": "Q1 2026, Q2 2026", "type": null, "points": null, "created": "2026-02-18"}, {"id": "1213301199218223", "name": "Is IBE leads broken? (not being stored)", "epic": null, "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-02-17"}, {"id": "1213301181897095", "name": "Entering multiple valid codes - breaks promocode modal", "epic": "Promocodes", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-02-17"}, {"id": "1213099571607051", "name": "IBE property email addresses: IBE confirmation/cancellation Emails vs BCCed recipients", "epic": "Emails", "priority": "High", "status": "Backlog", "source": "Onboarding Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-02-03"}, {"id": "1213113396837817", "name": "Cross - Website language switch and impact on IBE", "epic": null, "priority": null, "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-02-04"}, {"id": "1213038281107827", "name": "Follow up on \"Language detection refactor\" - Updated promocode settings - behavior in IBE", "epic": "IBE stability", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-01-30"}, {"id": "1212897051828506", "name": "Platform - Tax settings overview improvements", "epic": "Taxes", "priority": "Low", "status": "Backlog", "source": null, "objective": "Platform cleanup (+ add configurations)", "quarter": null, "type": null, "points": null, "created": "2026-01-21"}, {"id": "1212482763398550", "name": "Alp Art Hotel | Selecting bed preference (for one selected room type)", "epic": null, "priority": "High", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-12-17"}, {"id": "1212785671262732", "name": "New Tax configuration for Aethos Sardinia (Tax based on LoS)", "epic": "Taxes", "priority": "Medium", "status": "Backlog", "source": "PS Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-01-14"}, {"id": "1210386239942897", "name": "Booking status update from OpenGDS", "epic": "Core features logic (rates, availability, child, extra bed, etc)", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": "Improvement", "points": null, "created": "2025-05-27"}, {"id": "1212715278341786", "name": "Incorrect info in IBE overview - Booking amounts are before discount", "epic": null, "priority": "Medium", "status": "Backlog", "source": null, "objective": "Platform cleanup (+ add configurations)", "quarter": null, "type": null, "points": null, "created": "2026-01-09"}, {"id": "1212688182701766", "name": "Enable feature flags - Back-end", "epic": "IBE stability", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": "Q1 2026", "type": null, "points": null, "created": "2026-01-07"}, {"id": "1212513265309444", "name": "Property vs IBE default (first property) currency - Multi-property: Currency detection", "epic": "Multi-property (Core + Filters)", "priority": "Medium", "status": "Backlog", "source": null, "objective": "Enhance booking engine stability", "quarter": null, "type": null, "points": null, "created": "2025-12-18"}, {"id": "1210523140892488", "name": "Alpin Family | Translation for date and the time in the emails", "epic": "I18n and l10n (translations, currencies, etc.)", "priority": "Medium", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-06-11"}, {"id": "1212455832901292", "name": "Issue with SILVER Member Rate Not Showing in Booking Engine for Swiss-Belhotel Ambon", "epic": "Promocodes", "priority": "High", "status": "Backlog", "source": "Customer", "objective": "Deliver on commitments to SBH", "quarter": null, "type": null, "points": null, "created": "2025-12-17"}, {"id": "1212301898383763", "name": "IBE UI impacted - Adi Dharma", "epic": null, "priority": null, "status": "Backlog", "source": null, "objective": "Unblock onboarding", "quarter": null, "type": null, "points": null, "created": "2025-12-05"}, {"id": "1212391773707600", "name": "IBE - expanded/ full screen (issue on mobile)", "epic": "IBE UI/UX", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-12-11"}, {"id": "1212278935998000", "name": "Spacing property name and review data", "epic": "IBE UI/UX", "priority": "Low", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-12-03"}, {"id": "1211913104627084", "name": "[Config - Paused] Adi Dharma | Room card repositioning is needed (minimized button offset)", "epic": null, "priority": "High", "status": "Backlog", "source": "Onboarding Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-11-11"}, {"id": "1212376948930869", "name": "Payment form validation: CCG vs RDP", "epic": "IBE UI/UX", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-12-12"}, {"id": "1212302778149792", "name": "IBE booking data for RevOps (invoicing)", "epic": "IBE reporting", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-12-09"}, {"id": "1212365503236840", "name": "Background scrolls instead of IBE on Samsung Browser on Linux", "epic": null, "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-12-10"}, {"id": "1212361983653106", "name": "Hide buttons when IBE is opened", "epic": "IBE UI/UX", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-12-09"}, {"id": "1212249229829233", "name": "Assistance Needed – Re-sending Guest Confirmation from HC", "epic": "Emails", "priority": "Low", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-12-02"}, {"id": "1212214029445307", "name": "Adi Dharma | copying the URL of the website triggers a No Results Found Website", "epic": null, "priority": "High", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-12-02"}, {"id": "1212236517648962", "name": "Terms and conditions, refactor storing/updating []", "epic": "IBE stability", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-12-01"}, {"id": "1209654990029915", "name": "Partially pre-paid bookings (Deposit =/= 100%) []", "epic": "IBE check-out and payments", "priority": "Medium", "status": "Backlog", "source": "Customer", "objective": null, "quarter": "Q2 2026", "type": "Improvement", "points": null, "created": "2025-03-12"}, {"id": "1209309898732121", "name": "Design: Custom Colour Theme [5?]", "epic": "IBE UI/UX", "priority": "Low", "status": "Backlog", "source": null, "objective": null, "quarter": "Q2 2026, Q3 2026", "type": null, "points": null, "created": "2025-02-03"}, {"id": "1209677211115426", "name": "Replace child categories with new text [translations pending]", "epic": null, "priority": null, "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-03-14"}, {"id": "1209338603260904", "name": "Support for 'per piece' and 'per piece per night' supplement types > Needs IBE UI/UX update", "epic": "Supplements and Packages", "priority": "Low", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": "Improvement", "points": null, "created": "2025-02-06"}, {"id": "1211946071480918", "name": "Map view icon covers the description of the last property", "epic": "IBE map view", "priority": "Low", "status": "Backlog", "source": "Onboarding Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-11-14"}, {"id": "1211766272154574", "name": "Chain Reporting - Cross", "epic": "IBE reporting", "priority": null, "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-10-28"}, {"id": "1211908196122707", "name": "SBI: IBE Data and reports", "epic": "IBE reporting", "priority": "High", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-11-11"}, {"id": "1211932135392290", "name": "Stripe phasing out 'name' fields", "epic": "IBE check-out and payments", "priority": null, "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-11-13"}, {"id": "1211729650098935", "name": "[For OpenGDS] SBI | Request to remove the delete bottom from the reservations", "epic": null, "priority": "Medium", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-10-23"}, {"id": "1211792613516259", "name": "Promo Code “BCACC” – Multiple Rates Appearing on IBE for SBI", "epic": "Promocodes", "priority": "Medium", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-10-31"}, {"id": "1211861851187691", "name": "Multiproperty functionality toggle doesn't work (disabled toggled does not hide the property from the list in IBE)", "epic": "Multi-property (Core + Filters)", "priority": "Medium", "status": "Backlog", "source": "Onboarding Team", "objective": "Platform cleanup (+ add configurations)", "quarter": null, "type": null, "points": null, "created": "2025-11-06"}, {"id": "1211845815918581", "name": "[Duplicate] IBE pop up menu to have and scroll down option", "epic": null, "priority": "Low", "status": "Backlog", "source": "Onboarding Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-11-05"}, {"id": "1212302778149787", "name": "Promocode button in IBE Summary step", "epic": "IBE UI/UX", "priority": null, "status": "Backlog", "source": null, "objective": null, "quarter": "Q4 2025, Q1 2026", "type": null, "points": null, "created": "2025-12-09"}, {"id": "1212001084659744", "name": "Map view - Performance improvements: Next steps", "epic": "IBE map view", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-11-20"}, {"id": "1216842958818327", "name": "Properties List view - Performance improvements", "epic": "Multi-property (Core + Filters)", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-07-24"}, {"id": "1211961846734940", "name": "Image slider for IBE rooms step", "epic": "IBE UI/UX", "priority": "Low", "status": "Backlog", "source": null, "objective": "Improve IBE conversion", "quarter": null, "type": null, "points": null, "created": "2025-11-17"}, {"id": "1216060609240577", "name": "Level-up 'filters': UX improvement", "epic": "Multi-property (Core + Filters)", "priority": "High", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-06-26"}, {"id": "1211792613516299", "name": "Inquiry: New Year’s Gateway Rate Set up for Aethos London Shoreditch", "epic": null, "priority": "Medium", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-10-31"}, {"id": "1211802641302727", "name": "[Deferred] POC/Test: Rooms comparison modal", "epic": "AI in IBE", "priority": "Low", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-10-31"}, {"id": "1210881978966017", "name": "Swiss-belhotel | IBE language request", "epic": null, "priority": "High", "status": "Backlog", "source": "CS Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-07-24"}, {"id": "1209269138871474", "name": "[IBE reporting] Over-time Graphs in overview tab", "epic": "IBE reporting", "priority": "Medium", "status": "Backlog", "source": null, "objective": "Implement advanced IBE reporting (chain reporting + invoicing)", "quarter": null, "type": "Improvement", "points": null, "created": "2025-01-29"}, {"id": "1208661553838232", "name": "Add in quick currency options [5]", "epic": "IBE UI/UX", "priority": "Medium", "status": "Backlog", "source": null, "objective": "Improve IBE conversion", "quarter": null, "type": "Improvement", "points": 5.0, "created": "2024-10-30"}, {"id": "1211693599346594", "name": "Alpin Family | Extra bed fees in IBE", "epic": null, "priority": null, "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-10-20"}, {"id": "1211702324142772", "name": "Platform config: GHC data resync button in branch profile", "epic": "GHA integration (metasearch)", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-10-21"}, {"id": "1211649220586974", "name": "SBI | Metasearch to IBE Journey", "epic": null, "priority": "Low", "status": "Backlog", "source": "CS Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-10-15"}, {"id": "1211670906243959", "name": "Aethos London MEWS accounting not working", "epic": null, "priority": "High", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-10-17"}, {"id": "1211620426969257", "name": "Promo Code “Herbst25” – Not Working on Final Valid Date (Triforet) - Check the logic for valid until date", "epic": "Promocodes", "priority": "Medium", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-10-13"}, {"id": "1210738130085288", "name": "Multi-property: falls back to property overview", "epic": null, "priority": "Medium", "status": "Backlog", "source": "PS Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-07-08"}, {"id": "1211000715476092", "name": "[Back-end refactor] Hotel Casa - Something went wrong (1205 Lock wait timeout exceeded)", "epic": "IBE stability", "priority": "High", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-08-07"}, {"id": "1211618638783715", "name": "IBE Calendar behavior: no availabilities -> Open months with availability", "epic": "IBE UI/UX", "priority": "Medium", "status": "Backlog", "source": "Sales Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-10-13"}, {"id": "1210612133075882", "name": "Off-session and CCG payments: Email notification follow up []", "epic": "IBE stability", "priority": "High", "status": "Backlog", "source": null, "objective": "Restore customer confidence", "quarter": null, "type": null, "points": null, "created": "2025-06-23"}, {"id": "1211428818515520", "name": "[Paused] [Frontend] - NotificationStateManagement", "epic": "Promocodes", "priority": null, "status": "Backlog", "source": null, "objective": "Make promocodes great again", "quarter": null, "type": null, "points": null, "created": "2025-09-22"}, {"id": "1211288938662213", "name": "GHC - Send child rate data to GHC [?]", "epic": "GHA integration (metasearch)", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-09-08"}, {"id": "1211427392282969", "name": "IBE language after reloading the page", "epic": null, "priority": "Low", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-09-22"}, {"id": "1211392825641922", "name": "Cross Hotels & Resorts - Resize the shopping cart (IBE) and adjust the bottom margin when minimized. -> Enable close minimized IBE button feature", "epic": "IBE UI/UX", "priority": "Low", "status": "Backlog", "source": "PS Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-09-18"}, {"id": "1210352530898666", "name": "Aethos | Footer on emails not translated", "epic": null, "priority": "High", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": "Improvement", "points": null, "created": "2025-05-22"}, {"id": "1211371772772883", "name": "Loyalty on chain level [?]", "epic": "Loyalty (Bookingwhizzz)", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-09-16"}, {"id": "1210365071370068", "name": "IBE reporting mismatch", "epic": "IBE reporting", "priority": null, "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-05-23"}, {"id": "1211305107062359", "name": "Off-boarding a property from GHC", "epic": "GHA integration (metasearch)", "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-09-10"}, {"id": "1209714228836802", "name": "[Paused] Payments for connected Stripe account that do not have the IBE live yet [8]", "epic": "IBE check-out and payments", "priority": null, "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": 8.0, "created": "2025-03-19"}, {"id": "1211287774795820", "name": "[Paused] Aethos London: Single rate showing for the hidden rate (2 adults selected)", "epic": "IBE stability", "priority": null, "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-09-08"}, {"id": "1210961098408198", "name": "Investigate OpenGDS Processing Validation errors", "epic": null, "priority": "Medium", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-08-04"}, {"id": "1210811710330067", "name": "Cross Hotels | Indonesian currency on the IBE", "epic": null, "priority": "Medium", "status": "Backlog", "source": "Product Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-07-16"}, {"id": "1211208110787454", "name": "IBE property - Main user and edit permission/save changes", "epic": null, "priority": "Medium", "status": "Backlog", "source": null, "objective": "Platform cleanup (+ add configurations)", "quarter": null, "type": null, "points": null, "created": "2025-09-02"}, {"id": "1211047403406893", "name": "Swiss-belhotel | Rates showing 3 numbers behind the decimal instead of 2", "epic": "IBE UI/UX", "priority": "Medium", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-08-13"}, {"id": "1210473514411124", "name": "Improvement in the logic for child count feature", "epic": "Core features logic (rates, availability, child, extra bed, etc)", "priority": "High", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-06-05"}, {"id": "1210531472832864", "name": "IBE language detection logic not working on property overview (multi-property)", "epic": "Multi-property (Core + Filters)", "priority": null, "status": "Backlog", "source": "Customer", "objective": "Unblocking SBH launch", "quarter": null, "type": null, "points": null, "created": "2025-06-12"}, {"id": "1210343250758895", "name": "[UX] IBE | Unclear error message upon submitting payment", "epic": "IBE check-out and payments", "priority": "Medium", "status": "Backlog", "source": "CS Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-05-21"}, {"id": "1210754125434605", "name": "Alpin Family | Tripadvisor-related errors in the code", "epic": null, "priority": "Medium", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-07-09"}, {"id": "1210875960607910", "name": "IBE tracking: begin-checkout event in GA4", "epic": "Tracking", "priority": "Medium", "status": "Backlog", "source": "Product Team", "objective": null, "quarter": null, "type": "Bug", "points": null, "created": "2025-07-24"}, {"id": "1210627815093999", "name": "Error 500 While Removing Stripe Subaccount ID for MAUA Nusa Penida Bali", "epic": null, "priority": "Medium", "status": "Backlog", "source": "PS Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-06-24"}, {"id": "1211065849297004", "name": "Deep-link log-in - part 2", "epic": "Deep-links", "priority": "Low", "status": "Backlog", "source": null, "objective": null, "quarter": null, "type": "Bug", "points": null, "created": "2025-08-15"}, {"id": "1210483834432293", "name": "Casa Hotel | Question regarding URLs", "epic": null, "priority": "Low", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-06-06"}, {"id": "1210564288411332", "name": "[Feature Request] Alpin Family | Supplement infant price", "epic": null, "priority": "Low", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": "Improvement", "points": null, "created": "2025-06-17"}, {"id": "1210870503432563", "name": "Cross Hotels | Multi property functionality back bottom", "epic": "Multi-property (Core + Filters)", "priority": "Low", "status": "Backlog", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-07-23"}, {"id": "1210571020061504", "name": "Display of Rate Description in the Booking Confirmation emails [3-5]", "epic": "Emails", "priority": "Medium", "status": "Estimated", "source": "Customer", "objective": null, "quarter": null, "type": "Improvement", "points": null, "created": "2025-06-17"}, {"id": "1214795083075967", "name": "Upgrade the IBE search API [5]", "epic": "Search function", "priority": "Medium", "status": "Estimated", "source": null, "objective": null, "quarter": "Q2 2026, Q3 2026", "type": null, "points": null, "created": "2026-05-14"}, {"id": "1207966501883833", "name": "Corporate bookings checkout [breakdown the ticket]", "epic": "IBE check-out and payments", "priority": "Medium", "status": "Estimated", "source": null, "objective": "Implement corporate check-out flow", "quarter": "Q1 2026, Q2 2026", "type": "New feature", "points": 13.0, "created": "2024-08-02"}, {"id": "1213394106112285", "name": "Loyalty, promocode and more? -Promo Code Issues & Caching Impact on Booking Journey for The York by Swiss-Belhotel, Sydney - Scope (only point #1) [3]", "epic": "Promocodes", "priority": "High", "status": "Estimated", "source": "Customer", "objective": "Enhance booking engine stability", "quarter": null, "type": null, "points": 3.0, "created": "2026-02-23"}, {"id": "1213085272432573", "name": "Follow up on \"Casa Payment / booking completion Issue\" -> Payment in process -> Ignore search function [3]", "epic": "IBE check-out and payments", "priority": "High", "status": "Estimated", "source": null, "objective": "Enhance booking engine stability", "quarter": "Q1 2026", "type": null, "points": 3.0, "created": "2026-02-02"}, {"id": "1213432934130985", "name": "Entry level logged in loyalty members and promocode [2]", "epic": "Loyalty (Bookingwhizzz)", "priority": "High", "status": "Estimated", "source": null, "objective": null, "quarter": "Q1 2026", "type": null, "points": null, "created": "2026-02-27"}, {"id": "1212924793442998", "name": "[Spike] IBE breaking - Supplements\" linked and not linked rates [2-3]", "epic": "IBE stability", "priority": "Medium", "status": "Estimated", "source": null, "objective": null, "quarter": null, "type": null, "points": 3.0, "created": "2026-01-23"}, {"id": "1213138854626144", "name": "Removing corporate (access) code after selecting hidden rate [3]", "epic": "Promocodes", "priority": "Medium", "status": "Estimated", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-02-06"}, {"id": "1213299813266879", "name": "Payment method change and OpenGDS-IBE sync on 'summary' step [5]", "epic": "IBE check-out and payments", "priority": "High", "status": "Estimated", "source": "Customer", "objective": "Enhance booking engine stability", "quarter": "Q1 2026", "type": null, "points": 5.0, "created": "2026-02-16"}, {"id": "1212059543807328", "name": "[Spike] Infants -> 0 guest count (Add infants as reservation notes) [5]", "epic": "Core features logic (rates, availability, child, extra bed, etc)", "priority": "High", "status": "Estimated", "source": "Customer", "objective": "Pave the way for next epics (spike, research,)", "quarter": "Q3 2026", "type": null, "points": 5.0, "created": "2025-11-24"}, {"id": "1208988703258429", "name": "Check and unify payment capture date mentioned in different steps [3]", "epic": null, "priority": "Medium", "status": "Estimated", "source": null, "objective": "Enhance booking engine stability", "quarter": null, "type": "Improvement", "points": 3.0, "created": "2024-12-18"}, {"id": "1212305214786335", "name": "IBE displayed/selected currency - based on ip location [5]", "epic": "IBE map view", "priority": "High", "status": "Estimated", "source": null, "objective": "Level up the map view", "quarter": "Q4 2025", "type": null, "points": 5.0, "created": "2025-12-04"}, {"id": "1212305221923695", "name": "Follow up on \"Map view: Performance\" [13]", "epic": "IBE map view", "priority": null, "status": "Estimated", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-12-04"}, {"id": "1211815063618888", "name": "[Deferred] Map view: Currencies displayed - Property group CUR config in platform [3]", "epic": "IBE map view", "priority": "High", "status": "Estimated", "source": null, "objective": "Level up the map view", "quarter": null, "type": null, "points": 3.0, "created": "2025-11-03"}, {"id": "1211595317156479", "name": "[Lighthouse] Add invisible fields to the IBE FE [3]", "epic": "Lighthouse integration", "priority": "High", "status": "Estimated", "source": null, "objective": "Deliver on commitments to SBH", "quarter": null, "type": null, "points": 3.0, "created": "2025-10-09"}, {"id": "1212148813166692", "name": "AI in the IBE - Context layer: Platform interface [5]", "epic": "AI in IBE", "priority": "High", "status": "Estimated", "source": null, "objective": "Context layer and foundation for AI feature", "quarter": "Q4 2025", "type": null, "points": 5.0, "created": "2025-11-27"}, {"id": "1212151210003818", "name": "AI in the IBE - Context layer: Setup back-end service and integration with ChatGPT [13]", "epic": "AI in IBE", "priority": "High", "status": "Estimated", "source": null, "objective": "Context layer and foundation for AI feature", "quarter": "Q4 2025", "type": null, "points": 13.0, "created": "2025-11-27"}, {"id": "1212209442951749", "name": "AI in the IBE - Context layer: Infrastructure EC2 [5]", "epic": "AI in IBE", "priority": "High", "status": "Estimated", "source": null, "objective": "Context layer and foundation for AI feature", "quarter": "Q4 2025", "type": null, "points": 5.0, "created": "2025-11-27"}, {"id": "1210984600727011", "name": "Improvements to 'Rate' step: Rate conditions and policies [8]", "epic": "IBE UI/UX", "priority": "High", "status": "Estimated", "source": null, "objective": "Improve IBE conversion", "quarter": "Q3 2026", "type": null, "points": 8.0, "created": "2025-08-06"}, {"id": "1211899014661800", "name": "The multi property functionality is not saving the primary chain color [2]", "epic": "Multi-property (Core + Filters)", "priority": "Medium", "status": "Estimated", "source": "Onboarding Team", "objective": "Platform cleanup (+ add configurations)", "quarter": "Q4 2025, Q1 2026", "type": null, "points": 2.0, "created": "2025-11-10"}, {"id": "1210555496965239", "name": "Add/check validation to Checkout based on OpenGDS requirements - Back-end [5]", "epic": "IBE stability", "priority": "Medium", "status": "Estimated", "source": "Product Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-06-16"}, {"id": "1210770840009668", "name": "This promocode can only be used with single room reservations [3]", "epic": "Promocodes", "priority": "Medium", "status": "Estimated", "source": null, "objective": "Make promocodes great again", "quarter": null, "type": "Improvement", "points": 3.0, "created": "2025-07-11"}, {"id": "1211171177639432", "name": "Aethos Mallorca | Test Booking can't be cancelled (not being redirected to thank_you page from email button) [3]", "epic": null, "priority": "High", "status": "Estimated", "source": "CS Team", "objective": null, "quarter": null, "type": null, "points": 3.0, "created": "2025-08-28"}, {"id": "1211857951098176", "name": "Cancellation policies rules (midnight before arrival) [3]", "epic": "Core features logic (rates, availability, child, extra bed, etc)", "priority": "Medium", "status": "Estimated", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-11-06"}, {"id": "1211861456970519", "name": "GHC - Update the logic for MinLOS [5]", "epic": "GHA integration (metasearch)", "priority": "High", "status": "Estimated", "source": null, "objective": "Delivering on key commitments", "quarter": null, "type": null, "points": 5.0, "created": "2025-11-06"}, {"id": "1211665306758041", "name": "[Deferred] Map view: The logic for Currencies displayed in map (default currency set for IBE) [8]", "epic": "IBE map view", "priority": "High", "status": "Estimated", "source": null, "objective": "Level up the map view", "quarter": null, "type": null, "points": 8.0, "created": "2025-10-16"}, {"id": "1211815063618890", "name": "[Deferred] Map view: Currencies displayed - Mapping for languages - currencies [2]", "epic": "IBE map view", "priority": "High", "status": "Estimated", "source": null, "objective": "Level up the map view", "quarter": null, "type": null, "points": 2.0, "created": "2025-11-03"}, {"id": "1211815063618881", "name": "[Deferred] [Spike] Check for language detection logic [3]", "epic": "IBE map view", "priority": "High", "status": "Estimated", "source": null, "objective": "Level up the map view", "quarter": null, "type": null, "points": 3.0, "created": "2025-11-03"}, {"id": "1211772562962514", "name": "Map view: Date section (Front-end) [5]", "epic": "IBE map view", "priority": "Medium", "status": "Estimated", "source": null, "objective": "Level up the map view", "quarter": "Q1 2026", "type": null, "points": 5.0, "created": "2025-10-29"}, {"id": "1211794136389291", "name": "Map view: Date section (Back-end) [3]", "epic": "IBE map view", "priority": "Medium", "status": "Estimated", "source": null, "objective": "Level up the map view", "quarter": "Q1 2026", "type": null, "points": 3.0, "created": "2025-10-30"}, {"id": "1211168818974198", "name": "Filters - Message when no properties are found/ matching applied filters [2]", "epic": "Multi-property (Core + Filters)", "priority": "Medium", "status": "Estimated", "source": null, "objective": null, "quarter": null, "type": null, "points": 2.0, "created": "2025-08-28"}, {"id": "1211606959053693", "name": "Sentry error: Argument #1 ($total) must be of type string, null given [5]", "epic": "IBE stability", "priority": "High", "status": "Estimated", "source": null, "objective": null, "quarter": null, "type": null, "points": 5.0, "created": "2025-10-10"}, {"id": "1211606962483899", "name": "Sentry error: the rs.0.ro field is required [5]", "epic": "IBE stability", "priority": "High", "status": "Estimated", "source": null, "objective": null, "quarter": null, "type": null, "points": 5.0, "created": "2025-10-10"}, {"id": "1211595317156490", "name": "[Deferred] [Lighthouse] API integration [8]", "epic": "Lighthouse integration", "priority": "Low", "status": "Estimated", "source": null, "objective": null, "quarter": "Q4 2025", "type": null, "points": null, "created": "2025-10-09"}, {"id": "1211543013630873", "name": "IBE OpenGDS credentials, refactor storing/updating [3]", "epic": "IBE stability", "priority": "Medium", "status": "Estimated", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-10-03"}, {"id": "1211371281363818", "name": "Missing link between IBE property and its currency [5]", "epic": "IBE stability", "priority": "Medium", "status": "Estimated", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-09-16"}, {"id": "1208915432137232", "name": "IBE reports: Chain reports [Estimated, breakdown tickets to be created]", "epic": "IBE reporting", "priority": "High", "status": "Estimated", "source": null, "objective": null, "quarter": "Q1 2026, Q2 2026", "type": "Improvement", "points": null, "created": "2024-12-06"}, {"id": "1211169600002019", "name": "Primary color change to default when new IBE properties are created [5]", "epic": "Multi-property (Core + Filters)", "priority": "Low", "status": "Estimated", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-08-28"}, {"id": "1210785023901107", "name": "[Paused] Country and facilities filter: Platform/configurations [5]", "epic": "Multi-property (Core + Filters)", "priority": "Medium", "status": "Estimated", "source": null, "objective": "Delivering on key commitments", "quarter": null, "type": null, "points": 5.0, "created": "2025-07-14"}, {"id": "1210880964579607", "name": "Dates in the far future (booking window) | GHC:  [3]", "epic": null, "priority": "Medium", "status": "Estimated", "source": "Customer", "objective": null, "quarter": null, "type": "Improvement", "points": null, "created": "2025-07-24"}, {"id": "1210878742011923", "name": "Dates in the far future (booking window) | Platform: Configure the booking window [3]", "epic": null, "priority": "Medium", "status": "Estimated", "source": "Customer", "objective": null, "quarter": null, "type": "Improvement", "points": null, "created": "2025-07-24"}, {"id": "1210432994256547", "name": "Dates in the far future | IBE front-end: Disable the calendar [3]", "epic": null, "priority": "Medium", "status": "Estimated", "source": "Customer", "objective": null, "quarter": null, "type": "Improvement", "points": null, "created": "2025-06-02"}, {"id": "1212667667578945", "name": "RDP payment - status check (OpenGDS vs RDP vs IBE overview", "epic": null, "priority": "High", "status": "Upcoming Sprints", "source": null, "objective": null, "quarter": null, "type": null, "points": null, "created": "2026-01-09"}, {"id": "1210586775157117", "name": "Swiss-belhotel | Promocodes applied before date selection -> Promo code not applied for selected dates", "epic": null, "priority": "High", "status": "Upcoming Sprints", "source": "Customer", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-06-19"}, {"id": "1211092696341398", "name": "[Discussion] IBE stability and back-end refactor: Scope - Booking and payment modules", "epic": "IBE stability", "priority": "High", "status": "Upcoming Sprints", "source": "Dev Team", "objective": null, "quarter": null, "type": null, "points": null, "created": "2025-08-20"}, {"id": "1211054456847705", "name": "GHC - Included tax from the channel manager and taxes to be paid on arrival: Calculation of tax amounts for summary step [13]", "epic": "GHA integration (metasearch)", "priority": "High", "status": "Upcoming Sprints", "source": "Product Team", "objective": "Delivering on key commitments", "quarter": null, "type": "Improvement", "points": 13.0, "created": "2025-08-15"}];
+
+const PRI_ORDER = ['High','Medium','Low','None'];
+const PRI_COLOR = { High:'var(--pri-high)', Medium:'var(--pri-medium)', Low:'var(--pri-low)', None:'var(--pri-none)' };
+const PRI_LABEL = { High:'High', Medium:'Medium', Low:'Low', None:'No priority' };
+
+function priKey(p){ return p || 'None'; }
+function epicKey(e){ return e || null; }
+
+// ---------------- state ----------------
+const state = {
+  search: '',
+  epic: '',
+  status: '',
+  priorities: new Set(), // empty = all
+};
+
+function applyFilters(){
+  return TICKETS.filter(t=>{
+    if(state.search){
+      const q = state.search.toLowerCase();
+      if(!t.name.toLowerCase().includes(q)) return false;
+    }
+    if(state.epic){
+      if(state.epic === '__none__'){ if(t.epic) return false; }
+      else if(t.epic !== state.epic) return false;
+    }
+    if(state.status && t.status !== state.status) return false;
+    if(state.priorities.size){
+      if(!state.priorities.has(priKey(t.priority))) return false;
+    }
+    return true;
+  });
+}
+
+// ---------------- tooltip ----------------
+const tooltipEl = document.getElementById('tooltip');
+function showTooltip(x, y, html){
+  tooltipEl.innerHTML = html;
+  tooltipEl.style.left = x + 'px';
+  tooltipEl.style.top = (y - 10) + 'px';
+  tooltipEl.classList.add('show');
+}
+function hideTooltip(){ tooltipEl.classList.remove('show'); }
+
+// ---------------- filter bar UI ----------------
+function buildFilterBar(){
+  const epicCounts = {};
+  TICKETS.forEach(t=>{ const k = t.epic || '__none__'; epicCounts[k] = (epicCounts[k]||0)+1; });
+  const epicSelect = document.getElementById('epicSelect');
+  const epics = Object.keys(epicCounts).filter(k=>k!=='__none__').sort((a,b)=>epicCounts[b]-epicCounts[a]);
+  let opts = '<option value="">All epics</option>';
+  epics.forEach(e=>{ opts += `<option value="${escAttr(e)}">${escHtml(e)} (${epicCounts[e]})</option>`; });
+  opts += `<option value="__none__">No epic assigned (${epicCounts['__none__']||0})</option>`;
+  epicSelect.innerHTML = opts;
+
+  const chipWrap = document.getElementById('priorityChips');
+  chipWrap.innerHTML = PRI_ORDER.map(p=>{
+    const cls = p === 'None' ? 'p-None' : `p-${p}`;
+    return `<button class="chip-toggle ${cls}" data-pri="${p}"><span class="dot"></span>${PRI_LABEL[p]}</button>`;
+  }).join('');
+
+  document.getElementById('searchInput').addEventListener('input', e=>{ state.search = e.target.value.trim(); render(); });
+  epicSelect.addEventListener('change', e=>{ state.epic = e.target.value; render(); });
+  document.getElementById('statusSelect').addEventListener('change', e=>{ state.status = e.target.value; render(); });
+  chipWrap.querySelectorAll('.chip-toggle').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const p = btn.dataset.pri;
+      if(state.priorities.has(p)) state.priorities.delete(p); else state.priorities.add(p);
+      render();
+    });
+  });
+  document.getElementById('resetBtn').addEventListener('click', ()=>{
+    state.search=''; state.epic=''; state.status=''; state.priorities.clear();
+    document.getElementById('searchInput').value='';
+    epicSelect.value=''; document.getElementById('statusSelect').value='';
+    render();
+  });
+}
+
+function syncFilterBarUI(){
+  document.querySelectorAll('.chip-toggle').forEach(btn=>{
+    btn.classList.toggle('active', state.priorities.has(btn.dataset.pri));
+  });
+}
+
+function escHtml(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function escAttr(s){ return String(s).replace(/"/g,'&quot;'); }
+
+// ---------------- KPI row ----------------
+function renderKPIs(rows){
+  const total = rows.length;
+  const high = rows.filter(t=>t.priority==='High').length;
+  const noPriority = rows.filter(t=>!t.priority).length;
+  const noEpic = rows.filter(t=>!t.epic).length;
+  const distinctEpics = new Set(rows.filter(t=>t.epic).map(t=>t.epic)).size;
+  const inFlight = rows.filter(t=>t.status==='Estimated'||t.status==='Upcoming Sprints').length;
+
+  const cards = [
+    { label:'Tickets in view', value: total, foot: total===TICKETS.length ? 'of 181 total' : `of ${TICKETS.length} filtered · 181 total` },
+    { label:'High priority', value: high, sub: total? Math.round(high/total*100)+'%' : '0%', warn: high>0, foot:'need PM attention first' },
+    { label:'Distinct epics represented', value: distinctEpics, foot:'of 18 named epics' },
+    { label:'Missing an Epic', value: noEpic, sub: total? Math.round(noEpic/total*100)+'%' : '0%', foot:'not yet triaged to a theme' },
+    { label:'Ready for a sprint', value: inFlight, foot:'Estimated + Upcoming Sprints' },
+  ];
+  document.getElementById('kpiRow').innerHTML = cards.map(c=>`
+    <div class="kpi ${c.warn?'warn':''}">
+      <div class="label">${c.label}</div>
+      <div class="value">${c.value}${c.sub?`<small>${c.sub}</small>`:''}</div>
+      <div class="foot">${c.foot}</div>
+    </div>`).join('');
+}
+
+// ---------------- Epic demand chart ----------------
+function renderEpicChart(rows){
+  const counts = {};
+  rows.forEach(t=>{ const k = t.epic || '(No epic)'; counts[k] = (counts[k]||0)+1; });
+  const entries = Object.entries(counts).sort((a,b)=> b[1]-a[1] || a[0].localeCompare(b[0]));
+  const max = Math.max(1, ...entries.map(e=>e[1]));
+  const el = document.getElementById('epicChart');
+  el.innerHTML = entries.map(([label,count])=>{
+    const isNone = label === '(No epic)';
+    const pct = (count/max*100).toFixed(1);
+    return `<div class="barrow ${isNone?'dim':''}" data-epic="${escAttr(isNone?'__none__':label)}">
+      <div class="barlabel" title="${escAttr(label)}">${escHtml(label)}</div>
+      <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+      <div class="val">${count}</div>
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('.barrow').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      const epic = row.dataset.epic;
+      state.epic = (state.epic === epic) ? '' : epic;
+      document.getElementById('epicSelect').value = state.epic;
+      render();
+    });
+    row.addEventListener('mousemove', e=>{
+      const label = row.querySelector('.barlabel').textContent;
+      const val = row.querySelector('.val').textContent;
+      showTooltip(e.clientX, e.clientY, `<div class="tt-title">${escHtml(label)}</div><div class="tt-row"><span class="k" style="background:var(--blue)"></span>${val} ticket${val==1?'':'s'}</div>`);
+    });
+    row.addEventListener('mouseleave', hideTooltip);
+  });
+}
+
+// ---------------- Priority mix (100% stacked single bar) ----------------
+function renderPriorityBar(rows){
+  const counts = { High:0, Medium:0, Low:0, None:0 };
+  rows.forEach(t=>{ counts[priKey(t.priority)]++; });
+  const total = rows.length || 1;
+  const el = document.getElementById('priorityBar');
+
+  const legend = PRI_ORDER.map(p=>`<div class="item"><span class="sw" style="background:${PRI_COLOR[p]}"></span>${PRI_LABEL[p]} &middot; ${counts[p]}</div>`).join('');
+
+  const segs = PRI_ORDER.map(p=>{
+    const pct = (counts[p]/total*100);
+    if(pct<=0) return '';
+    return `<div class="seg" data-pri="${p}" style="width:${pct}%; background:${PRI_COLOR[p]}"></div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="legend">${legend}</div>
+    <div class="stackrow">
+      <div class="track" style="height:34px;">${segs}</div>
+    </div>
+    <div style="display:flex; justify-content:space-between; margin-top:6px; font-size:11.5px; color:var(--text-muted);">
+      <span>0%</span><span>100%</span>
+    </div>`;
+
+  el.querySelectorAll('.seg').forEach(seg=>{
+    seg.addEventListener('click', ()=>{
+      const p = seg.dataset.pri;
+      if(state.priorities.size===1 && state.priorities.has(p)) state.priorities.clear();
+      else { state.priorities.clear(); state.priorities.add(p); }
+      render();
+    });
+    seg.addEventListener('mousemove', e=>{
+      const p = seg.dataset.pri;
+      const pct = Math.round(counts[p]/total*100);
+      showTooltip(e.clientX, e.clientY, `<div class="tt-title">${PRI_LABEL[p]}</div><div class="tt-row"><span class="k" style="background:${PRI_COLOR[p]}"></span><b>${counts[p]}</b>&nbsp;tickets (${pct}%)</div>`);
+    });
+    seg.addEventListener('mouseleave', hideTooltip);
+  });
+}
+
+// ---------------- Pipeline stage ----------------
+function renderStageChart(rows){
+  const stages = ['Backlog','Estimated','Upcoming Sprints'];
+  const colors = { 'Backlog':'var(--stage-1)', 'Estimated':'var(--stage-2)', 'Upcoming Sprints':'var(--stage-3)' };
+  const counts = {}; stages.forEach(s=>counts[s]=0);
+  rows.forEach(t=>{ if(counts[t.status]!==undefined) counts[t.status]++; });
+  const max = Math.max(1, ...stages.map(s=>counts[s]));
+  const el = document.getElementById('stageChart');
+  el.innerHTML = stages.map((s,i)=>{
+    const pct = Math.max(6, counts[s]/max*100);
+    return `<div class="stage" data-status="${s}">
+      <div class="name">${s}</div>
+      <div class="track"><div class="fill" style="width:${pct}%; background:${colors[s]}"><span>${counts[s]}</span></div></div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.stage').forEach(row=>{
+    row.style.cursor='pointer';
+    row.addEventListener('click', ()=>{
+      const s = row.dataset.status;
+      state.status = (state.status===s) ? '' : s;
+      document.getElementById('statusSelect').value = state.status;
+      render();
+    });
+  });
+}
+
+// ---------------- Priority by epic (stacked) ----------------
+function renderEpicPriorityChart(rows){
+  const byEpic = {};
+  rows.forEach(t=>{
+    const k = t.epic || '(No epic)';
+    if(!byEpic[k]) byEpic[k] = { High:0, Medium:0, Low:0, None:0, total:0 };
+    byEpic[k][priKey(t.priority)]++;
+    byEpic[k].total++;
+  });
+  const entries = Object.entries(byEpic).sort((a,b)=> b[1].total - a[1].total).slice(0,14);
+  const max = Math.max(1, ...entries.map(([,v])=>v.total));
+
+  document.getElementById('epicPriorityLegend').innerHTML = PRI_ORDER.map(p=>
+    `<div class="item"><span class="sw" style="background:${PRI_COLOR[p]}"></span>${PRI_LABEL[p]}</div>`
+  ).join('');
+
+  const el = document.getElementById('epicPriorityChart');
+  el.innerHTML = entries.map(([label, v])=>{
+    const widthPct = (v.total/max*100);
+    const segs = PRI_ORDER.map(p=>{
+      const w = v[p] ? (v[p]/v.total*100) : 0;
+      if(w<=0) return '';
+      return `<div class="seg" data-epic="${escAttr(label==='(No epic)'?'__none__':label)}" data-pri="${p}" data-count="${v[p]}" style="width:${w}%; background:${PRI_COLOR[p]}"></div>`;
+    }).join('');
+    return `<div class="stackrow">
+      <div class="barlabel" title="${escAttr(label)}">${escHtml(label)}</div>
+      <div class="track" style="width:${widthPct}%">${segs}</div>
+      <div class="total">${v.total}</div>
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('.seg').forEach(seg=>{
+    seg.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const epic = seg.dataset.epic, p = seg.dataset.pri;
+      state.epic = (state.epic===epic) ? '' : epic;
+      state.priorities.clear();
+      if(state.epic) state.priorities.add(p);
+      document.getElementById('epicSelect').value = state.epic;
+      render();
+    });
+    seg.addEventListener('mousemove', e=>{
+      const p = seg.dataset.pri, count = seg.dataset.count;
+      const epicLabel = seg.closest('.stackrow').querySelector('.barlabel').textContent;
+      showTooltip(e.clientX, e.clientY, `<div class="tt-title">${escHtml(epicLabel)}</div><div class="tt-row"><span class="k" style="background:${PRI_COLOR[p]}"></span>${PRI_LABEL[p]}: <b>${count}</b></div>`);
+    });
+    seg.addEventListener('mouseleave', hideTooltip);
+  });
+}
+
+// ---------------- Backlog growth trend ----------------
+function renderTrend(rows){
+  const byMonth = {};
+  rows.forEach(t=>{
+    if(!t.created) return;
+    const m = t.created.slice(0,7);
+    byMonth[m] = (byMonth[m]||0)+1;
+  });
+  const months = Object.keys(byMonth).sort();
+  const svg = document.getElementById('trendSvg');
+  const W = 640, H = 200, padL = 30, padR = 12, padT = 14, padB = 26;
+  const innerW = W - padL - padR, innerH = H - padT - padB;
+
+  if(months.length < 2){
+    svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle" class="axislabel">Not enough dated tickets in this filter</text>`;
+    return;
+  }
+
+  const max = Math.max(1, ...months.map(m=>byMonth[m]));
+  const niceMax = Math.ceil(max/2)*2;
+  const x = i => padL + (i/(months.length-1))*innerW;
+  const y = v => padT + innerH - (v/niceMax)*innerH;
+
+  const pathPts = months.map((m,i)=>`${x(i)},${y(byMonth[m])}`).join(' L ');
+  const areaPts = `M ${x(0)},${y(0)} L ${pathPts.replace('M ','')} L ${x(months.length-1)},${y(0)} Z`;
+
+  let gridSvg = '';
+  const steps = 4;
+  for(let s=0;s<=steps;s++){
+    const val = Math.round(niceMax/steps*s);
+    const gy = y(val);
+    gridSvg += `<line class="gridline" x1="${padL}" x2="${W-padR}" y1="${gy}" y2="${gy}"/>`;
+    gridSvg += `<text class="axislabel" x="${padL-6}" y="${gy+3}" text-anchor="end">${val}</text>`;
+  }
+
+  const labelEvery = Math.ceil(months.length/7);
+  let xLabels = '';
+  months.forEach((m,i)=>{
+    if(i%labelEvery===0 || i===months.length-1){
+      const [yy,mm] = m.split('-');
+      const short = new Date(+yy, +mm-1, 1).toLocaleString('en-US',{month:'short'}) + " '" + yy.slice(2);
+      xLabels += `<text class="axislabel" x="${x(i)}" y="${H-8}" text-anchor="middle">${short}</text>`;
+    }
+  });
+
+  const hitCols = months.map((m,i)=>{
+    const cw = innerW/months.length;
+    const cx = padL + i*cw;
+    return `<g class="hitrow" data-i="${i}"><rect x="${cx}" y="${padT}" width="${cw}" height="${innerH}"/></g>`;
+  }).join('');
+
+  svg.innerHTML = `
+    ${gridSvg}
+    <path class="area" d="M ${x(0)},${y(0)} L ${months.map((m,i)=>`${x(i)},${y(byMonth[m])}`).join(' L ')} L ${x(months.length-1)},${y(0)} Z"/>
+    <path class="line" d="M ${months.map((m,i)=>`${x(i)},${y(byMonth[m])}`).join(' L ')}"/>
+    ${xLabels}
+    <line class="crosshair" id="trendCrosshair" y1="${padT}" y2="${padT+innerH}"/>
+    <circle class="hoverdot" id="trendDot" r="4.5"/>
+    ${hitCols}
+  `;
+
+  const crosshair = document.getElementById('trendCrosshair');
+  const dot = document.getElementById('trendDot');
+  svg.querySelectorAll('.hitrow').forEach(g=>{
+    g.addEventListener('mousemove', e=>{
+      const i = +g.dataset.i;
+      const m = months[i];
+      const cx = x(i), cy = y(byMonth[m]);
+      crosshair.setAttribute('x1', cx); crosshair.setAttribute('x2', cx); crosshair.style.opacity = 1;
+      dot.setAttribute('cx', cx); dot.setAttribute('cy', cy); dot.style.opacity = 1;
+      const [yy,mm] = m.split('-');
+      const full = new Date(+yy, +mm-1, 1).toLocaleString('en-US',{month:'long', year:'numeric'});
+      showTooltip(e.clientX, e.clientY, `<div class="tt-title">${full}</div><div class="tt-row"><span class="k" style="background:var(--blue)"></span><b>${byMonth[m]}</b> new ticket${byMonth[m]==1?'':'s'}</div>`);
+    });
+    g.addEventListener('mouseleave', ()=>{ crosshair.style.opacity=0; dot.style.opacity=0; hideTooltip(); });
+  });
+}
+
+// ---------------- Source chart ----------------
+function renderSourceChart(rows){
+  const counts = {};
+  rows.forEach(t=>{ const k = t.source || 'Not specified'; counts[k]=(counts[k]||0)+1; });
+  const entries = Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  const max = Math.max(1, ...entries.map(e=>e[1]));
+  const el = document.getElementById('sourceChart');
+  el.innerHTML = entries.map(([label,count])=>{
+    const isNone = label==='Not specified';
+    const pct = (count/max*100).toFixed(1);
+    return `<div class="barrow ${isNone?'dim':''}">
+      <div class="barlabel" title="${escAttr(label)}">${escHtml(label)}</div>
+      <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+      <div class="val">${count}</div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('.barrow').forEach(row=>{
+    row.style.cursor='default';
+    row.addEventListener('mousemove', e=>{
+      const label = row.querySelector('.barlabel').textContent;
+      const val = row.querySelector('.val').textContent;
+      showTooltip(e.clientX, e.clientY, `<div class="tt-title">${escHtml(label)}</div><div class="tt-row"><span class="k" style="background:var(--blue)"></span>${val} ticket${val==1?'':'s'}</div>`);
+    });
+    row.addEventListener('mouseleave', hideTooltip);
+  });
+}
+
+// ---------------- Table ----------------
+let sortKey = 'created', sortDir = -1;
+function renderTable(rows){
+  const sorted = [...rows].sort((a,b)=>{
+    let av = a[sortKey] ?? '', bv = b[sortKey] ?? '';
+    if(sortKey==='priority'){
+      const order = {High:0,Medium:1,Low:2,'':3};
+      av = order[a.priority||'']; bv = order[b.priority||''];
+    }
+    if(av<bv) return -1*sortDir;
+    if(av>bv) return 1*sortDir;
+    return 0;
+  });
+  const body = document.getElementById('ticketBody');
+  if(!sorted.length){
+    body.innerHTML = `<tr><td colspan="6"><div class="emptystate">No tickets match the current filters.</div></td></tr>`;
+    return;
+  }
+  body.innerHTML = sorted.map(t=>{
+    const pk = t.priority || 'None';
+    return `<tr>
+      <td class="name">${escHtml(t.name)}</td>
+      <td>${t.epic ? escHtml(t.epic) : '<span class="statustext">—</span>'}</td>
+      <td><span class="pill pill-${pk}">${PRI_LABEL[pk]}</span></td>
+      <td class="statustext">${escHtml(t.status||'—')}</td>
+      <td class="statustext">${t.source ? escHtml(t.source) : '—'}</td>
+      <td class="statustext">${t.created||'—'}</td>
+    </tr>`;
+  }).join('');
+
+  document.querySelectorAll('table.tickets thead th').forEach(th=>{
+    const key = th.dataset.sort;
+    th.querySelector('.arrow').textContent = key===sortKey ? (sortDir===1?'↑':'↓') : '';
+  });
+}
+
+document.querySelectorAll('table.tickets thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.sort;
+    if(sortKey===key) sortDir *= -1; else { sortKey = key; sortDir = key==='created' ? -1 : 1; }
+    renderTable(applyFilters());
+  });
+});
+
+// ---------------- master render ----------------
+function render(){
+  const rows = applyFilters();
+  syncFilterBarUI();
+  document.getElementById('resultCount').textContent = `${rows.length} of ${TICKETS.length} tickets`;
+  renderKPIs(rows);
+  renderEpicChart(rows);
+  renderPriorityBar(rows);
+  renderStageChart(rows);
+  renderEpicPriorityChart(rows);
+  renderTrend(rows);
+  renderSourceChart(rows);
+  renderTable(rows);
+}
+
+buildFilterBar();
+render();
+</script>
