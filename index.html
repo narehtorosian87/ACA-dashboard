@@ -327,6 +327,37 @@
 
   .stage .name.dim{ font-style:italic; color:var(--text-muted); font-weight:500; }
 
+  /* ---------- recommendations ---------- */
+  .reco-card{ margin-bottom:22px; }
+  .recolist{ display:flex; flex-direction:column; gap:10px; }
+  .recoitem{
+    display:flex; gap:12px; align-items:flex-start; padding:12px 14px;
+    border-radius:10px; background:var(--page); border:1px solid var(--border);
+  }
+  .recoitem .recotag{
+    flex:none; font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.04em;
+    padding:4px 8px; border-radius:5px; margin-top:1px; white-space:nowrap;
+  }
+  .recoitem .recotag.tier-high{ background:var(--pri-high-bg); color:var(--pri-high); }
+  .recoitem .recotag.tier-medium{ background:var(--pri-medium-bg); color:var(--pri-medium); }
+  .recoitem .recotag.tier-info{ background:var(--blue-wash); color:var(--blue); }
+  .recoitem .recobody{ flex:1 1 auto; min-width:0; }
+  .recoitem .recotitle{ font-size:13.5px; font-weight:700; color:var(--text-primary); margin:0 0 3px; }
+  .recoitem .recotext{ font-size:12.5px; color:var(--text-secondary); line-height:1.5; margin:0; }
+  .recoempty{ font-size:12.5px; color:var(--text-muted); padding:4px 2px; }
+
+  /* ---------- collapsible ticket explorer ---------- */
+  .tablecard > summary{
+    cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; gap:16px;
+  }
+  .tablecard > summary::-webkit-details-marker{ display:none; }
+  .tablecard > summary .summary-text h2{ margin:0 0 2px; }
+  .tablecard > summary .summary-text .cardsub{ margin:0; }
+  .tablecard > summary .chevron{ flex:none; color:var(--text-muted); transition:transform .15s ease; }
+  .tablecard[open] > summary .chevron{ transform:rotate(90deg); }
+  .tablecard[open] > summary{ margin-bottom:2px; }
+  .tablecard .tablewrap{ margin-top:16px; }
+
   .pill-delivered{ background:var(--pri-low-bg); color:var(--pri-low); }
   .pill-inprogress{ background:var(--blue-wash); color:var(--stage-2); }
   .pill-codereview{ background:var(--blue-wash); color:var(--stage-3); }
@@ -354,6 +385,12 @@
       <div>Exported from Asana &middot; generated 2026-09-07</div>
     </div>
   </header>
+
+  <div class="card reco-card">
+    <h2>Recommended focus</h2>
+    <p class="cardsub">Auto-generated from the full export below — a quick read before you dive into the filters and charts.</p>
+    <div class="recolist" id="recoList"></div>
+  </div>
 
   <div class="filterbar">
     <span class="flabel">Filter</span>
@@ -417,9 +454,14 @@
     </div>
   </div>
 
-  <div class="card tablecard">
-    <h2>Ticket explorer</h2>
-    <p class="cardsub">Every ticket behind the charts above — filtered and sorted live.</p>
+  <details class="card tablecard" id="ticketDetails">
+    <summary>
+      <div class="summary-text">
+        <h2>Ticket explorer</h2>
+        <p class="cardsub">Every ticket behind the charts above — filtered and sorted live. <span id="tableSummaryCount"></span></p>
+      </div>
+      <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </summary>
     <div class="tablewrap">
       <div class="scrollbody">
         <table class="tickets">
@@ -437,7 +479,7 @@
         </table>
       </div>
     </div>
-  </div>
+  </details>
 
   <footer class="note">
     Scope: 181 backlog items where Product = Booking Engine, exported from the Asana "Product Backlog" project on 2026&#8209;09&#8209;07.
@@ -963,6 +1005,9 @@ function render(){
   const rows = applyFilters();
   syncFilterBarUI();
   document.getElementById('resultCount').textContent = `${rows.length} of ${TICKETS.length} tickets`;
+  document.getElementById('tableSummaryCount').textContent = `(${rows.length} shown)`;
+  const hasActiveFilter = !!(state.search || state.epic || state.status || state.priorities.size);
+  if(hasActiveFilter) document.getElementById('ticketDetails').open = true;
   renderKPIs(rows);
   renderEpicChart(rows);
   renderPriorityBar(rows);
@@ -973,7 +1018,91 @@ function render(){
   renderTable(rows);
 }
 
+// ---------------- Recommended focus ----------------
+function computeRecommendations(){
+  const recos = [];
+  const total = TICKETS.length;
+  const high = TICKETS.filter(t=>t.priority==='High');
+  const highBacklog = high.filter(t=>t.status==='Backlog');
+
+  if(high.length && highBacklog.length){
+    const pct = Math.round(highBacklog.length/high.length*100);
+    recos.push({
+      tier:'high',
+      title:`${highBacklog.length} of ${high.length} High-priority tickets (${pct}%) haven't even been estimated`,
+      text:`They're sitting in raw Backlog, not Estimated or Upcoming Sprints — nothing can be scheduled until someone sizes them. Start here before pulling in new requests.`
+    });
+  }
+
+  const cutoff = new Date(); cutoff.setMonth(cutoff.getMonth()-6);
+  const stale = highBacklog.filter(t=>t.created && new Date(t.created) < cutoff).sort((a,b)=> a.created.localeCompare(b.created));
+  if(stale.length){
+    const oldest = stale[0];
+    const ageMonths = Math.max(1, Math.floor((new Date() - new Date(oldest.created)) / (1000*60*60*24*30)));
+    recos.push({
+      tier:'high',
+      title:`${stale.length} High-priority ticket${stale.length===1?'':'s'} ${stale.length===1?'has':'have'} been waiting 6+ months`,
+      text:`Oldest is “${oldest.name}”, open since ${oldest.created} (~${ageMonths} months). Worth a look before it goes stale in the customer's mind too.`
+    });
+  }
+
+  const highByEpic = {};
+  TICKETS.forEach(t=>{ if(t.epic && t.priority==='High') highByEpic[t.epic]=(highByEpic[t.epic]||0)+1; });
+  const topEpic = Object.entries(highByEpic).sort((a,b)=>b[1]-a[1])[0];
+  if(topEpic){
+    recos.push({
+      tier:'medium',
+      title:`"${topEpic[0]}" carries the most urgent demand`,
+      text:`${topEpic[1]} High-priority tickets are tagged to this epic — more than any other. A natural candidate for the next planning cycle.`
+    });
+  }
+
+  const noEpic = TICKETS.filter(t=>!t.epic).length;
+  if(noEpic){
+    const pct = Math.round(noEpic/total*100);
+    recos.push({
+      tier:'info',
+      title:`${noEpic} tickets (${pct}%) have no Epic tag`,
+      text:`Until these are classified, the "most requested" epic counts above undercount real demand. Worth a triage pass.`
+    });
+  }
+
+  const cust = TICKETS.filter(t=>t.source==='Customer');
+  if(cust.length){
+    const custHighPct = Math.round(cust.filter(t=>t.priority==='High').length/cust.length*100);
+    const overallHighPct = Math.round(high.length/total*100);
+    if(custHighPct - overallHighPct >= 4){
+      recos.push({
+        tier:'info',
+        title:`Customer-reported tickets skew more urgent`,
+        text:`${custHighPct}% of customer-sourced tickets are High priority, vs ${overallHighPct}% across the whole backlog — customers tend to surface the sharper edges first.`
+      });
+    }
+  }
+
+  return recos;
+}
+
+function renderRecommendations(){
+  const TIER_LABEL = { high:'Act now', medium:'Plan for next', info:'Worth knowing' };
+  const recos = computeRecommendations();
+  const el = document.getElementById('recoList');
+  if(!recos.length){
+    el.innerHTML = `<div class="recoempty">No standout signals in this export.</div>`;
+    return;
+  }
+  el.innerHTML = recos.map(r=>`
+    <div class="recoitem">
+      <span class="recotag tier-${r.tier}">${TIER_LABEL[r.tier]}</span>
+      <div class="recobody">
+        <p class="recotitle">${escHtml(r.title)}</p>
+        <p class="recotext">${escHtml(r.text)}</p>
+      </div>
+    </div>`).join('');
+}
+
 buildFilterBar();
+renderRecommendations();
 render();
 </script>
 
