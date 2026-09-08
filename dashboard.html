@@ -333,7 +333,36 @@
   .recoitem{
     display:flex; gap:12px; align-items:flex-start; padding:12px 14px;
     border-radius:10px; background:var(--page); border:1px solid var(--border);
+    cursor:pointer; transition:border-color .12s ease, background .12s ease;
   }
+  .recoitem:hover{ border-color:var(--border-strong); background:var(--surface); }
+  .recoitem:focus-visible{ outline:2px solid var(--blue); outline-offset:2px; }
+  .recoitem .recodismiss{
+    flex:none; align-self:flex-start; width:20px; height:20px; border-radius:50%; border:0;
+    background:transparent; color:var(--text-muted); font-size:12px; line-height:1; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; padding:0;
+  }
+  .recoitem .recodismiss:hover{ background:var(--pri-high-bg); color:var(--pri-high); }
+  .dismissedtoggle{
+    margin-top:10px; font:inherit; font-size:12px; font-weight:600; color:var(--blue);
+    background:none; border:0; cursor:pointer; padding:2px 0;
+  }
+  .dismissedlist{ margin-top:8px; display:flex; flex-direction:column; gap:6px; }
+  .dismissedlist[hidden]{ display:none; }
+  .dismisseditem{
+    display:flex; align-items:center; gap:10px; padding:8px 12px; border-radius:8px;
+    background:var(--page); border:1px dashed var(--border);
+  }
+  .dismisseditem .dismissedtitle{ flex:1 1 auto; min-width:0; font-size:12px; color:var(--text-muted); text-decoration:line-through; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .dismisseditem .restorebtn{
+    flex:none; font:inherit; font-size:11.5px; font-weight:700; color:var(--blue); background:none; border:0; cursor:pointer;
+  }
+  .activefilter{
+    margin-top:8px; display:inline-flex; align-items:center; gap:8px; font-size:11.5px; font-weight:600;
+    color:var(--blue); background:var(--blue-wash); padding:4px 10px; border-radius:999px;
+  }
+  .activefilter button{ font:inherit; background:none; border:0; color:inherit; cursor:pointer; padding:0; font-weight:800; }
+  .activefilter[hidden]{ display:none; }
   .recoitem .recotag{
     flex:none; font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:0.04em;
     padding:4px 8px; border-radius:5px; margin-top:1px; white-space:nowrap;
@@ -388,8 +417,10 @@
 
   <div class="card reco-card">
     <h2>Recommended focus</h2>
-    <p class="cardsub">Auto-generated from the full export below — a quick read before you dive into the filters and charts.</p>
+    <p class="cardsub">Auto-generated from the full export below — click a card to see the tickets behind it, or dismiss it once you've handled it.</p>
     <div class="recolist" id="recoList"></div>
+    <button class="dismissedtoggle" id="dismissedToggle" hidden></button>
+    <div class="dismissedlist" id="dismissedList" hidden></div>
   </div>
 
   <div class="filterbar">
@@ -459,6 +490,10 @@
       <div class="summary-text">
         <h2>Ticket explorer</h2>
         <p class="cardsub">Every ticket behind the charts above — filtered and sorted live. <span id="tableSummaryCount"></span></p>
+        <div class="activefilter" id="activeFilterPill" hidden>
+          <span id="activeFilterLabel"></span>
+          <button type="button" id="clearActiveFilterBtn" title="Clear this filter" aria-label="Clear this filter">✕</button>
+        </div>
       </div>
       <svg class="chevron" width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </summary>
@@ -604,10 +639,12 @@ const state = {
   epic: '',
   status: '',
   priorities: new Set(), // empty = all
+  customFilter: null, // { label, predicate(ticket) } — set by clicking a recommendation
 };
 
 function applyFilters(){
   return TICKETS.filter(t=>{
+    if(state.customFilter && !state.customFilter.predicate(t)) return false;
     if(state.search){
       const q = state.search.toLowerCase();
       if(!t.name.toLowerCase().includes(q)) return false;
@@ -622,6 +659,23 @@ function applyFilters(){
     }
     return true;
   });
+}
+
+function clearCustomFilter(){
+  state.customFilter = null;
+  render();
+}
+
+function applyRecoFilter(reco){
+  state.search=''; state.epic=''; state.status=''; state.priorities.clear();
+  document.getElementById('searchInput').value='';
+  document.getElementById('epicSelect').value='';
+  document.getElementById('statusSelect').value='';
+  state.customFilter = { label: reco.filterLabel, predicate: reco.predicate };
+  render();
+  const details = document.getElementById('ticketDetails');
+  details.open = true;
+  details.scrollIntoView({ behavior:'smooth', block:'start' });
 }
 
 // ---------------- tooltip ----------------
@@ -662,10 +716,16 @@ function buildFilterBar(){
     });
   });
   document.getElementById('resetBtn').addEventListener('click', ()=>{
-    state.search=''; state.epic=''; state.status=''; state.priorities.clear();
+    state.search=''; state.epic=''; state.status=''; state.priorities.clear(); state.customFilter=null;
     document.getElementById('searchInput').value='';
     epicSelect.value=''; document.getElementById('statusSelect').value='';
     render();
+  });
+
+  document.getElementById('clearActiveFilterBtn').addEventListener('click', (e)=>{
+    e.preventDefault(); // clicking inside <summary> would otherwise toggle the details open/closed
+    e.stopPropagation();
+    clearCustomFilter();
   });
 }
 
@@ -1006,7 +1066,16 @@ function render(){
   syncFilterBarUI();
   document.getElementById('resultCount').textContent = `${rows.length} of ${TICKETS.length} tickets`;
   document.getElementById('tableSummaryCount').textContent = `(${rows.length} shown)`;
-  const hasActiveFilter = !!(state.search || state.epic || state.status || state.priorities.size);
+
+  const pill = document.getElementById('activeFilterPill');
+  if(state.customFilter){
+    pill.hidden = false;
+    document.getElementById('activeFilterLabel').textContent = `Filtered by: ${state.customFilter.label}`;
+  } else {
+    pill.hidden = true;
+  }
+
+  const hasActiveFilter = !!(state.search || state.epic || state.status || state.priorities.size || state.customFilter);
   if(hasActiveFilter) document.getElementById('ticketDetails').open = true;
   renderKPIs(rows);
   renderEpicChart(rows);
@@ -1028,32 +1097,43 @@ function computeRecommendations(){
   if(high.length && highBacklog.length){
     const pct = Math.round(highBacklog.length/high.length*100);
     recos.push({
+      id:'unestimated-high',
       tier:'high',
       title:`${highBacklog.length} of ${high.length} High-priority tickets (${pct}%) haven't even been estimated`,
-      text:`They're sitting in raw Backlog, not Estimated or Upcoming Sprints — nothing can be scheduled until someone sizes them. Start here before pulling in new requests.`
+      text:`They're sitting in raw Backlog, not Estimated or Upcoming Sprints — nothing can be scheduled until someone sizes them. Start here before pulling in new requests.`,
+      filterLabel:'High-priority tickets not yet estimated',
+      predicate: t => t.priority==='High' && t.status==='Backlog'
     });
   }
 
   const cutoff = new Date(); cutoff.setMonth(cutoff.getMonth()-6);
-  const stale = highBacklog.filter(t=>t.created && new Date(t.created) < cutoff).sort((a,b)=> a.created.localeCompare(b.created));
+  const cutoffIso = cutoff.toISOString().slice(0,10);
+  const stale = highBacklog.filter(t=>t.created && t.created < cutoffIso).sort((a,b)=> a.created.localeCompare(b.created));
   if(stale.length){
     const oldest = stale[0];
     const ageMonths = Math.max(1, Math.floor((new Date() - new Date(oldest.created)) / (1000*60*60*24*30)));
     recos.push({
+      id:'stale-high',
       tier:'high',
       title:`${stale.length} High-priority ticket${stale.length===1?'':'s'} ${stale.length===1?'has':'have'} been waiting 6+ months`,
-      text:`Oldest is “${oldest.name}”, open since ${oldest.created} (~${ageMonths} months). Worth a look before it goes stale in the customer's mind too.`
+      text:`Oldest is “${oldest.name}”, open since ${oldest.created} (~${ageMonths} months). Worth a look before it goes stale in the customer's mind too.`,
+      filterLabel:'High-priority tickets waiting 6+ months',
+      predicate: t => t.priority==='High' && t.status==='Backlog' && t.created && t.created < cutoffIso
     });
   }
 
   const highByEpic = {};
   TICKETS.forEach(t=>{ if(t.epic && t.priority==='High') highByEpic[t.epic]=(highByEpic[t.epic]||0)+1; });
-  const topEpic = Object.entries(highByEpic).sort((a,b)=>b[1]-a[1])[0];
-  if(topEpic){
+  const topEpicEntry = Object.entries(highByEpic).sort((a,b)=>b[1]-a[1])[0];
+  if(topEpicEntry){
+    const topEpicName = topEpicEntry[0];
     recos.push({
+      id:'top-epic-high',
       tier:'medium',
-      title:`"${topEpic[0]}" carries the most urgent demand`,
-      text:`${topEpic[1]} High-priority tickets are tagged to this epic — more than any other. A natural candidate for the next planning cycle.`
+      title:`"${topEpicName}" carries the most urgent demand`,
+      text:`${topEpicEntry[1]} High-priority tickets are tagged to this epic — more than any other. A natural candidate for the next planning cycle.`,
+      filterLabel:`High-priority tickets in "${topEpicName}"`,
+      predicate: t => t.epic===topEpicName && t.priority==='High'
     });
   }
 
@@ -1061,9 +1141,12 @@ function computeRecommendations(){
   if(noEpic){
     const pct = Math.round(noEpic/total*100);
     recos.push({
+      id:'no-epic',
       tier:'info',
       title:`${noEpic} tickets (${pct}%) have no Epic tag`,
-      text:`Until these are classified, the "most requested" epic counts above undercount real demand. Worth a triage pass.`
+      text:`Until these are classified, the "most requested" epic counts above undercount real demand. Worth a triage pass.`,
+      filterLabel:'Tickets with no Epic tag',
+      predicate: t => !t.epic
     });
   }
 
@@ -1073,9 +1156,12 @@ function computeRecommendations(){
     const overallHighPct = Math.round(high.length/total*100);
     if(custHighPct - overallHighPct >= 4){
       recos.push({
+        id:'customer-skew',
         tier:'info',
         title:`Customer-reported tickets skew more urgent`,
-        text:`${custHighPct}% of customer-sourced tickets are High priority, vs ${overallHighPct}% across the whole backlog — customers tend to surface the sharper edges first.`
+        text:`${custHighPct}% of customer-sourced tickets are High priority, vs ${overallHighPct}% across the whole backlog — customers tend to surface the sharper edges first.`,
+        filterLabel:'High-priority tickets reported by customers',
+        predicate: t => t.source==='Customer' && t.priority==='High'
       });
     }
   }
@@ -1083,23 +1169,88 @@ function computeRecommendations(){
   return recos;
 }
 
+const DISMISSED_KEY = 'aca-backlog-dismissed-recos-v1';
+function getDismissedRecoIds(){
+  try{ return new Set(JSON.parse(localStorage.getItem(DISMISSED_KEY) || '[]')); }
+  catch(e){ return new Set(); }
+}
+function setDismissedRecoIds(set){
+  try{ localStorage.setItem(DISMISSED_KEY, JSON.stringify([...set])); }
+  catch(e){ /* localStorage unavailable — dismissal just won't persist */ }
+}
+let dismissedListOpen = false;
+
 function renderRecommendations(){
   const TIER_LABEL = { high:'Act now', medium:'Plan for next', info:'Worth knowing' };
-  const recos = computeRecommendations();
+  const all = computeRecommendations();
+  const dismissed = getDismissedRecoIds();
+  const active = all.filter(r=>!dismissed.has(r.id));
+  const dismissedRecos = all.filter(r=>dismissed.has(r.id));
+
   const el = document.getElementById('recoList');
-  if(!recos.length){
-    el.innerHTML = `<div class="recoempty">No standout signals in this export.</div>`;
-    return;
+  if(!active.length){
+    el.innerHTML = `<div class="recoempty">${all.length ? 'All caught up — every signal has been dismissed.' : 'No standout signals in this export.'}</div>`;
+  } else {
+    el.innerHTML = active.map(r=>`
+      <div class="recoitem" data-id="${escAttr(r.id)}" tabindex="0" role="button" aria-label="${escAttr(r.title)} — click to filter tickets below">
+        <span class="recotag tier-${r.tier}">${TIER_LABEL[r.tier]}</span>
+        <div class="recobody">
+          <p class="recotitle">${escHtml(r.title)}</p>
+          <p class="recotext">${escHtml(r.text)}</p>
+        </div>
+        <button class="recodismiss" data-id="${escAttr(r.id)}" title="Dismiss — I've handled this" aria-label="Dismiss this recommendation">✕</button>
+      </div>`).join('');
   }
-  el.innerHTML = recos.map(r=>`
-    <div class="recoitem">
-      <span class="recotag tier-${r.tier}">${TIER_LABEL[r.tier]}</span>
-      <div class="recobody">
-        <p class="recotitle">${escHtml(r.title)}</p>
-        <p class="recotext">${escHtml(r.text)}</p>
-      </div>
-    </div>`).join('');
+
+  el.querySelectorAll('.recoitem').forEach(card=>{
+    const reco = active.find(r=>r.id===card.dataset.id);
+    if(!reco) return;
+    card.addEventListener('click', ()=> applyRecoFilter(reco));
+    card.addEventListener('keydown', e=>{
+      if(e.key==='Enter' || e.key===' '){ e.preventDefault(); applyRecoFilter(reco); }
+    });
+  });
+  el.querySelectorAll('.recodismiss').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      const d = getDismissedRecoIds();
+      d.add(btn.dataset.id);
+      setDismissedRecoIds(d);
+      renderRecommendations();
+    });
+  });
+
+  const toggle = document.getElementById('dismissedToggle');
+  const list = document.getElementById('dismissedList');
+  if(dismissedRecos.length){
+    toggle.hidden = false;
+    list.hidden = !dismissedListOpen;
+    toggle.textContent = dismissedListOpen ? `Hide dismissed (${dismissedRecos.length})` : `Show dismissed (${dismissedRecos.length})`;
+    list.innerHTML = dismissedRecos.map(r=>`
+      <div class="dismisseditem">
+        <span class="recotag tier-${r.tier}">${TIER_LABEL[r.tier]}</span>
+        <span class="dismissedtitle" title="${escAttr(r.title)}">${escHtml(r.title)}</span>
+        <button class="restorebtn" data-id="${escAttr(r.id)}">Restore</button>
+      </div>`).join('');
+    list.querySelectorAll('.restorebtn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const d = getDismissedRecoIds();
+        d.delete(btn.dataset.id);
+        setDismissedRecoIds(d);
+        renderRecommendations();
+      });
+    });
+  } else {
+    toggle.hidden = true;
+    list.hidden = true;
+    dismissedListOpen = false;
+  }
 }
+
+document.getElementById('dismissedToggle').addEventListener('click', ()=>{
+  dismissedListOpen = !dismissedListOpen;
+  renderRecommendations();
+});
 
 buildFilterBar();
 renderRecommendations();
